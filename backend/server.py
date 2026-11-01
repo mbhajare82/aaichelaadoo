@@ -15,10 +15,12 @@ import logging
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Literal
 
+import asyncio
 import bcrypt
 import jwt
 import razorpay
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends
+import requests
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, UploadFile, File
 from fastapi.responses import StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -469,8 +471,70 @@ CHAT:
     return {"saved": True, "lead_id": lead["id"]}
 
 
+# ---------------- Object storage (product photos) ----------------
+STORAGE_BASE = (os.environ.get("INTEGRATION_PROXY_URL") or "").strip() or "https://integrations.emergentagent.com"
+STORAGE_URL = STORAGE_BASE.rstrip("/") + "/objstore/api/v1/storage"
+IMAGE_TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+MAX_UPLOAD = 5 * 1024 * 1024
+_storage_key = None
+
+
+def init_storage(force: bool = False) -> str:
+    global _storage_key
+    if _storage_key and not force:
+        return _storage_key
+    r = requests.post(f"{STORAGE_URL}/init", json={"emergent_key": os.environ["EMERGENT_LLM_KEY"]}, timeout=30)
+    r.raise_for_status()
+    _storage_key = r.json()["storage_key"]
+    return _storage_key
+
+
+def put_object(path: str, data: bytes, content_type: str) -> dict:
+    r = requests.put(f"{STORAGE_URL}/objects/{path}", data=data, timeout=120,
+                     headers={"X-Storage-Key": init_storage(), "Content-Type": content_type})
+    if r.status_code == 404:
+        r = requests.put(f"{STORAGE_URL}/objects/{path}", data=data, timeout=120,
+                         headers={"X-Storage-Key": init_storage(force=True), "Content-Type": content_type})
+    r.raise_for_status()
+    return r.json()
+
+
+def get_object(path: str) -> bytes:
+    r = requests.get(f"{STORAGE_URL}/objects/{path}", headers={"X-Storage-Key": init_storage()}, timeout=60)
+    r.raise_for_status()
+    return r.content
+
+
+@api.get("/files/{path:path}")
+async def serve_file(path: str):
+    rec = await db.files.find_one({"storage_path": path, "is_deleted": False}, {"_id": 0})
+    if not rec:
+        raise HTTPException(404, "File not found")
+    data = await asyncio.to_thread(get_object, path)
+    return Response(content=data, media_type=rec["content_type"], headers={"Cache-Control": "public, max-age=86400"})
+
+
 # ---------------- Admin ----------------
 admin = APIRouter(prefix="/api/admin", dependencies=[Depends(require_admin)])
+
+
+@admin.post("/upload")
+async def upload_photo(file: UploadFile = File(...)):
+    ext = IMAGE_TYPES.get(file.content_type or "")
+    if not ext:
+        raise HTTPException(400, "Please upload a JPG, PNG or WEBP photo")
+    data = await file.read()
+    if len(data) > MAX_UPLOAD:
+        raise HTTPException(400, "Photo is too large (max 5 MB)")
+    try:
+        res = await asyncio.to_thread(put_object, f"aaicheladau/products/{new_id()}.{ext}", data, file.content_type)
+    except Exception:
+        logger.exception("upload failed")
+        raise HTTPException(502, "Photo upload failed. Please try again.")
+    await db.files.insert_one({"id": new_id(), "storage_path": res["path"], "original_filename": file.filename,
+                               "content_type": file.content_type, "size": len(data), "is_deleted": False,
+                               "created_at": now_iso()})
+    return {"url": f"/api/files/{res['path']}"}
 
 
 @admin.get("/stats")
@@ -632,17 +696,17 @@ async def save_settings(body: SettingsIn):
 
 # ---------------- Seed ----------------
 SEED_PRODUCTS = [
-    ("Besan Laddu", "sweets", "Roasted gram flour, pure ghee and cardamom.", "/images/laddu.jpg", 700),
-    ("Rava Laddu", "sweets", "Semolina, coconut and ghee, Aai's style.", "/images/laddu.jpg", 600),
-    ("Karanji", "sweets", "Crisp pastry filled with coconut and jaggery.", "/images/healthy2.jpg", 750),
-    ("Anarse", "sweets", "Traditional rice and jaggery Diwali sweet.", "/images/healthy.jpg", 800),
-    ("Bhajani Chakli", "namkin", "Crunchy spiral of roasted multigrain bhajani.", "/images/namkin.jpg", 560),
-    ("Poha Chivda", "namkin", "Thin poha with peanuts, curry leaves and spices.", "/images/chivda.jpg", 480),
-    ("Shankarpali", "namkin", "Sweet-salty diamond bites, fried in ghee.", "/images/namkin.jpg", 500),
-    ("Kadboli", "namkin", "Spiced lentil-flour rings, hand rolled.", "/images/namkin.jpg", 580),
-    ("Dink Laddu", "healthy", "Edible gum, dry fruits and dates, no sugar.", "/images/healthy.jpg", 1200),
-    ("Nachni Laddu", "healthy", "Ragi, jaggery and ghee for winter strength.", "/images/oats.jpg", 900),
-    ("Roasted Makhana Chivda", "healthy", "Light roasted lotus seeds and nuts.", "/images/healthy2.jpg", 1000),
+    ("Besan Laddu", "sweets", "Roasted gram flour, pure ghee and cardamom.", "/images/besan_laddu.jpg", 700),
+    ("Rava Laddu", "sweets", "Semolina, coconut and ghee, Aai's style.", "/images/rava_laddu.jpg", 600),
+    ("Karanji", "sweets", "Crisp pastry filled with coconut and jaggery.", "/images/karanji.jpg", 750),
+    ("Anarse", "sweets", "Traditional rice and jaggery Diwali sweet.", "/images/anarse.jpg", 800),
+    ("Bhajani Chakli", "namkin", "Crunchy spiral of roasted multigrain bhajani.", "/images/chakli.jpg", 560),
+    ("Poha Chivda", "namkin", "Thin poha with peanuts, curry leaves and spices.", "/images/poha_chivda.jpg", 480),
+    ("Shankarpali", "namkin", "Sweet-salty diamond bites, fried in ghee.", "/images/shankarpali.jpg", 500),
+    ("Kadboli", "namkin", "Spiced lentil-flour rings, hand rolled.", "/images/kadboli.jpg", 580),
+    ("Dink Laddu", "healthy", "Edible gum, dry fruits and dates, no sugar.", "/images/dink_laddu.jpg", 1200),
+    ("Nachni Laddu", "healthy", "Ragi, jaggery and ghee for winter strength.", "/images/nachni_laddu.jpg", 900),
+    ("Roasted Makhana Chivda", "healthy", "Light roasted lotus seeds and nuts.", "/images/makhana_chivda.jpg", 1000),
 ]
 
 SEED_COMBOS = [
@@ -660,6 +724,11 @@ async def startup():
     await db.products.create_index("id", unique=True)
     await db.orders.create_index("id", unique=True)
     await db.leads.create_index("created_at")
+    await db.files.create_index("storage_path")
+    try:
+        await asyncio.to_thread(init_storage)
+    except Exception:
+        logger.exception("storage init failed")
     email = os.environ["ADMIN_EMAIL"].lower()
     if not await db.users.find_one({"email": email}):
         await db.users.insert_one({"id": new_id(), "email": email, "name": "Admin", "role": "admin",

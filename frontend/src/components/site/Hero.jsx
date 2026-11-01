@@ -34,7 +34,7 @@ export const Hero = ({ settings }) => (
       </motion.div>
       <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.1 }} className="relative md:col-span-5">
         <div className="absolute -left-2 -top-2 h-full sm:-left-4 sm:-top-4 w-full rounded-3xl border-2 border-dashed border-amber-500/40" />
-        <img src="/images/laddu.jpg" alt="Homemade laddu" className="relative aspect-[4/5] w-full rounded-3xl object-cover shadow-2xl" />
+        <img src="/images/besan_laddu.jpg" alt="Homemade laddu" className="relative aspect-[4/5] w-full rounded-3xl object-cover shadow-2xl" />
         {settings && (
           <div className="absolute -bottom-5 left-4 right-4 rounded-2xl border border-amber-500/30 bg-slate-900/85 p-4 text-xs backdrop-blur-xl sm:text-sm" data-testid="hero-delivery-note">
             <p className="font-semibold text-amber-400">Delivery charges</p>

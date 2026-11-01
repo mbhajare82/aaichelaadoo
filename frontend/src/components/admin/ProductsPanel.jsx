@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2, Upload, Loader2, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,42 @@ import { http, rupee, errMsg } from "@/lib/api";
 
 const blank = { name: "", category: "sweets", description: "", image: "", price_per_kg: 600, stock_grams: 5000, active: true };
 const inputCls = "border-slate-600 bg-slate-950 text-slate-100";
+
+const PhotoPicker = ({ value, onChange }) => {
+  const [busy, setBusy] = useState(false);
+  const pick = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const fd = new FormData();
+    fd.append("file", file);
+    setBusy(true);
+    try {
+      const { data } = await http.post("/admin/upload", fd);
+      onChange(data.url);
+      toast.success("Photo uploaded");
+    } catch (err) {
+      toast.error(errMsg(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div>
+      <Label className="text-xs">Photo</Label>
+      <div className="mt-1 flex items-center gap-3">
+        <div className="h-16 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-600 bg-slate-950">
+          {value ? <img src={value} alt="" className="h-full w-full object-cover" data-testid="product-form-photo-preview" /> : <ImageIcon className="m-auto mt-5 h-5 w-5 text-slate-600" />}
+        </div>
+        <label className="flex cursor-pointer items-center gap-2 rounded-full border border-slate-600 px-4 py-2 text-xs font-semibold hover:border-amber-400">
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />} {value ? "Change photo" : "Upload photo"}
+          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={pick} disabled={busy} className="hidden" data-testid="product-form-photo-input" />
+        </label>
+      </div>
+      <p className="mt-1 text-[11px] text-slate-500">JPG, PNG or WEBP, up to 5 MB.</p>
+    </div>
+  );
+};
 
 const ProductForm = ({ initial, onSaved, onClose }) => {
   const [f, setF] = useState({ ...initial, stock_kg: initial.stock_grams / 1000 });
@@ -36,7 +72,7 @@ const ProductForm = ({ initial, onSaved, onClose }) => {
         </select>
       </div>
       <div><Label className="text-xs">Description</Label><Input value={f.description} onChange={set("description")} className={inputCls} data-testid="product-form-description" /></div>
-      <div><Label className="text-xs">Image URL</Label><Input value={f.image} onChange={set("image")} placeholder="/images/laddu.jpg" className={inputCls} data-testid="product-form-image" /></div>
+      <PhotoPicker value={f.image} onChange={(image) => setF((cur) => ({ ...cur, image }))} />
       <div className="grid grid-cols-2 gap-3">
         <div><Label className="text-xs">Price per kg (₹)</Label><Input required type="number" min="1" step="1" value={f.price_per_kg} onChange={set("price_per_kg")} className={inputCls} data-testid="product-form-price" /></div>
         <div><Label className="text-xs">Stock available (kg)</Label><Input required type="number" min="0" step="0.05" value={f.stock_kg} onChange={set("stock_kg")} className={inputCls} data-testid="product-form-stock" /></div>
@@ -74,7 +110,7 @@ export const ProductsPanel = () => {
           <tbody>
             {list.map((p) => (
               <tr key={p.id} className="border-b border-slate-800" data-testid={`admin-product-row-${p.id}`}>
-                <td className="p-4 font-semibold">{p.name}</td>
+                <td className="p-4 font-semibold"><div className="flex items-center gap-3">{p.image && <img src={p.image} alt="" className="h-10 w-12 rounded-md object-cover" />}{p.name}</div></td>
                 <td className="p-4 capitalize text-slate-300">{p.category}</td>
                 <td className="p-4">{rupee(p.price_per_kg)}</td>
                 <td className="p-4">{(p.stock_grams / 1000).toFixed(2)} kg {p.stock_grams < 250 && <span className="ml-1 rounded-full bg-red-500/20 px-2 py-0.5 text-xs text-red-400">Out of stock</span>}</td>
