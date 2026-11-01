@@ -1,0 +1,37 @@
+{
+  "summary": "Tested WhatsApp order tracking end-to-end. Backend: 13/13 pytest pass (disabled->400, 401 unauth, 422 empty/invalid status, out-of-stock 400, invalid pack 400, server-side totals India 949+250=1199 / Abroad 949+700=1649, WA id format, detail edit persistence, confirm deducts Besan 750g + Poha 250g, repeat confirm/delivered no double deduction, cancel restores, unknown id 404). Frontend: admin Settings enable WhatsApp 9876543210 saved; public cart (Besan 500g + Mini Faral Box) -> popup opened to wa.me (redirects api.whatsapp.com/send?phone=919876543210) with 'Order ref: WALU50XX', items, Items 949, Delivery 250, Total 1,199; WhatsApp disabled server-side while page open -> toast 'WhatsApp orders are not available right now' and blank popup closed. Admin WhatsApp orders tab: card shows id/items/totals/status new; filter counts correct and update after status change; name/phone/note saved and persist after reload; status select confirmed persisted and stock reduced; mobile 390px no horizontal overflow. One real logic bug found: stock inflation on cancel after over-confirm.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PATCH /api/admin/whatsapp-orders/{id}", "issue": "Stock inflation: confirm does not check available stock and adjust_stock clamps at 0, but cancel adds back the full stock_need. Reproduced: Kadboli stock 300g, two 250g WA orders confirmed -> 50 -> 0 (clamped), both cancelled -> 500g (200g phantom stock created). Fix: either reject confirm with 400 when stock_grams < need, or store the actually-deducted grams per product on the order and restore exactly that."},
+      {"endpoint": "PATCH /api/admin/whatsapp-orders/{id}", "issue": "Non-atomic read-then-update of stock_deducted: two concurrent status PATCHes can double deduct/restore. Use find_one_and_update with filter {id, stock_deducted: False} before adjusting stock."},
+      {"endpoint": "POST /api/whatsapp-orders", "issue": "Public, unauthenticated, no rate limit -> anyone can spam wa_orders collection. Consider simple IP rate limiting."},
+      {"endpoint": "admin wa_orders", "issue": "No delete endpoint for WhatsApp orders; spam/test entries can only be cancelled, not removed."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin WhatsApp orders card (mobile 390px)", "issues": ["Save button (wa-order-save-{id}) is very thin (~14px tall) when grid collapses to 1 column - it has px-4 but no height/py; add h-9 to match inputs"]},
+      {"screen": "Admin tabs (mobile)", "issues": ["'WhatsApp orders' tab is off-screen in the horizontally scrolled tab bar with no visual hint of more tabs (minor)"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_whatsapp_orders.py", "/app/test_reports/pytest/wa_orders.xml"],
+  "action_items": [
+    "Fix stock inflation in update_wa_order (validate stock on confirm or track actually-deducted amounts)",
+    "Make stock_deducted transition atomic (find_one_and_update with condition)",
+    "Add h-9 to WhatsApp order Save button for mobile layout"
+  ],
+  "critical_code_review_comments": [
+    "update_wa_order: confirm with insufficient stock silently clamps to 0; cancel restores full amount -> phantom stock",
+    "update_wa_order: race condition on stock_deducted flag",
+    "WhatsAppCartButton: message lines use client-side item prices rather than server lines returned by POST; fine now since quote is server-calculated, but returning lines/total from POST and using them would guarantee message == logged order"
+  ],
+  "updated_files": ["/app/backend/tests/test_whatsapp_orders.py"],
+  "success_rate": {"backend": "100% (13/13) + 1 logic bug found via edge test", "frontend": "100%"},
+  "seed_data_creation": "Created 5 wa_orders during testing; all deleted (db.wa_orders now empty). All product stock_grams verified 10000. Settings restored: whatsapp_enabled false, number '', default message, india 250, abroad 450, round_up, diwali_deadline 2026-11-05.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run pytest with '-n 0' (pytest.ini enables xdist with loadscope; ordered class tests break otherwise). test_whatsapp_orders.py leaves 2 wa_orders behind (no delete API) - clean with mongosh test_database db.wa_orders.deleteMany({}). Restore of stock to 10000 relies on cancel step. Iterations 1-4 passed previously."
+}

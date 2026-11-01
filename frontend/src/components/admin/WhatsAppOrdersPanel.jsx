@@ -38,7 +38,7 @@ const WaOrderCard = ({ o, onSaved }) => {
         <Input placeholder="Customer name" value={f.customer_name} onChange={(e) => setF({ ...f, customer_name: e.target.value })} className={inputCls} data-testid={`wa-order-name-${o.id}`} />
         <Input placeholder="Phone" value={f.customer_phone} onChange={(e) => setF({ ...f, customer_phone: e.target.value })} className={inputCls} data-testid={`wa-order-phone-${o.id}`} />
         <Input placeholder="Note (address, delivery date…)" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} className={inputCls} data-testid={`wa-order-note-${o.id}`} />
-        <button onClick={() => patch(f, "Details saved")} className="rounded-full bg-amber-500 px-4 text-xs font-bold text-[#0A0F1D]" data-testid={`wa-order-save-${o.id}`}>Save</button>
+        <button onClick={() => patch(f, "Details saved")} className="h-9 rounded-full bg-amber-500 px-4 text-xs font-bold text-[#0A0F1D]" data-testid={`wa-order-save-${o.id}`}>Save</button>
       </div>
     </div>
   );

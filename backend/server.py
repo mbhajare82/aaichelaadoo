@@ -723,14 +723,23 @@ async def update_wa_order(wid: str, body: WaPatchIn):
     if not order:
         raise HTTPException(404, "WhatsApp order not found")
     upd = body.model_dump(exclude_none=True)
-    status = upd.get("status")
-    if status in ("confirmed", "delivered") and not order.get("stock_deducted"):
-        await adjust_stock(order.get("stock_need", {}), -1)
-        upd["stock_deducted"] = True
-    elif status in ("new", "cancelled") and order.get("stock_deducted"):
-        await adjust_stock(order.get("stock_need", {}), 1)
-        upd["stock_deducted"] = False
-    await db.wa_orders.update_one({"id": wid}, {"$set": upd})
+    status = upd.pop("status", None)
+    need = order.get("stock_need", {})
+    if status in ("confirmed", "delivered"):
+        if not order.get("stock_deducted"):
+            for pid, g in need.items():
+                p = await db.products.find_one({"id": pid}, {"_id": 0, "name": 1, "stock_grams": 1})
+                if not p or p["stock_grams"] < g:
+                    raise HTTPException(400, f"Not enough stock of {p['name'] if p else 'an item'} to confirm this order")
+        if await db.wa_orders.find_one_and_update({"id": wid, "stock_deducted": False}, {"$set": {"stock_deducted": True}}):
+            await adjust_stock(need, -1)
+    elif status in ("new", "cancelled"):
+        if await db.wa_orders.find_one_and_update({"id": wid, "stock_deducted": True}, {"$set": {"stock_deducted": False}}):
+            await adjust_stock(need, 1)
+    if status:
+        upd["status"] = status
+    if upd:
+        await db.wa_orders.update_one({"id": wid}, {"$set": upd})
     return {"ok": True}
 
 
