@@ -25,6 +25,7 @@ User choices: Claude Sonnet 5.5 (Emergent key); Razorpay test mode first; delive
 - Brand renamed to AAICHELADOO (header, footer, admin, Laado chat, Razorpay checkout name, browser tab title). Laado's fallback line "'Aaiche Laado' will call back for serving you..." kept as originally specified.
 - Placeholder logo (golden laddu with diya, AI-generated) at frontend/public/logo.png, logo192.png, favicon.png; used in header, footer, admin login/dashboard and browser tab. Replace those 3 files to change it.
 - WhatsApp ordering (click-to-chat wa.me, no API): admin Settings tab toggle + number + opening message (off by default, number empty); floating "Order on WhatsApp" button and "Order this cart on WhatsApp" in cart with items, delivery and total prefilled.
+- WhatsApp order log: cart WhatsApp button first logs the cart (server-priced) as WA-ref order, ref included in message; admin "WhatsApp orders" tab with status new/confirmed/delivered/cancelled, filter, customer name/phone/note; stock reduced on confirmed/delivered, restored on cancel/new.
 
 ## Pending / Backlog
 - P0: Real Razorpay test keys (saved values are invalid placeholders) then test payment success flow.

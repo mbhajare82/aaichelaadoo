@@ -10,12 +10,14 @@ import { CombosPanel } from "@/components/admin/CombosPanel";
 import { OrdersPanel } from "@/components/admin/OrdersPanel";
 import { TestimonialsPanel } from "@/components/admin/TestimonialsPanel";
 import { SettingsPanel } from "@/components/admin/SettingsPanel";
+import { WhatsAppOrdersPanel } from "@/components/admin/WhatsAppOrdersPanel";
 
 const tabs = [
   ["leads", "Leads", LeadsPanel],
   ["products", "Items & stock", ProductsPanel],
   ["combos", "Combos", CombosPanel],
   ["orders", "Orders", OrdersPanel],
+  ["whatsapp", "WhatsApp orders", WhatsAppOrdersPanel],
   ["testimonials", "Testimonials", TestimonialsPanel],
   ["settings", "Settings", SettingsPanel],
 ];

@@ -336,6 +336,28 @@ async def verify_order(body: VerifyIn):
     return {"order_id": order["id"], "status": "paid", "total": order["total"]}
 
 
+# ---------------- WhatsApp orders ----------------
+class WaOrderIn(BaseModel):
+    items: List[CartLine] = Field(min_length=1)
+    destination: Literal["india", "abroad"] = "india"
+
+
+@api.post("/whatsapp-orders")
+async def log_whatsapp_order(body: WaOrderIn):
+    if not (await get_settings()).get("whatsapp_enabled"):
+        raise HTTPException(400, "WhatsApp orders are not available right now")
+    q = await build_quote(body.items, body.destination)
+    if q["errors"]:
+        raise HTTPException(400, q["errors"][0])
+    wid = "WA" + "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    await db.wa_orders.insert_one({"id": wid, "destination": body.destination, "lines": q["lines"],
+                                   "subtotal": q["subtotal"], "weight_g": q["weight_g"],
+                                   "delivery_fee": q["delivery_fee"], "total": q["total"],
+                                   "stock_need": q["stock_need"], "stock_deducted": False, "status": "new",
+                                   "customer_name": "", "customer_phone": "", "note": "", "created_at": now_iso()})
+    return {"id": wid}
+
+
 # ---------------- Feedback / testimonials ----------------
 class FeedbackIn(BaseModel):
     order_id: str
@@ -675,6 +697,40 @@ async def order_status(oid: str, body: StatusIn):
     res = await db.orders.update_one({"id": oid}, {"$set": {"status": body.status}})
     if not res.matched_count:
         raise HTTPException(404, "Order not found")
+    return {"ok": True}
+
+
+class WaPatchIn(BaseModel):
+    status: Optional[Literal["new", "confirmed", "delivered", "cancelled"]] = None
+    customer_name: Optional[str] = Field(default=None, max_length=80)
+    customer_phone: Optional[str] = Field(default=None, max_length=20)
+    note: Optional[str] = Field(default=None, max_length=500)
+
+
+@admin.get("/whatsapp-orders")
+async def admin_wa_orders():
+    return await db.wa_orders.find({}, {"_id": 0, "stock_need": 0}).sort("created_at", -1).to_list(1000)
+
+
+async def adjust_stock(need: dict, sign: int):
+    for pid, g in need.items():
+        await db.products.update_one({"id": pid}, [{"$set": {"stock_grams": {"$max": [0, {"$add": ["$stock_grams", sign * g]}]}}}])
+
+
+@admin.patch("/whatsapp-orders/{wid}")
+async def update_wa_order(wid: str, body: WaPatchIn):
+    order = await db.wa_orders.find_one({"id": wid})
+    if not order:
+        raise HTTPException(404, "WhatsApp order not found")
+    upd = body.model_dump(exclude_none=True)
+    status = upd.get("status")
+    if status in ("confirmed", "delivered") and not order.get("stock_deducted"):
+        await adjust_stock(order.get("stock_need", {}), -1)
+        upd["stock_deducted"] = True
+    elif status in ("new", "cancelled") and order.get("stock_deducted"):
+        await adjust_stock(order.get("stock_need", {}), 1)
+        upd["stock_deducted"] = False
+    await db.wa_orders.update_one({"id": wid}, {"$set": upd})
     return {"ok": True}
 
 

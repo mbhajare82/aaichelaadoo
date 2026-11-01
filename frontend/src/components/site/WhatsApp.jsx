@@ -1,4 +1,6 @@
-import { fmtWeight, rupee } from "@/lib/api";
+import { useState } from "react";
+import { fmtWeight, rupee, http, errMsg } from "@/lib/api";
+import { toast } from "sonner";
 
 export const waNumber = (n) => {
   const d = (n || "").replace(/\D/g, "");
@@ -9,12 +11,12 @@ export const waLink = (settings, text) => `https://wa.me/${waNumber(settings.wha
 
 export const waEnabled = (settings) => !!(settings?.whatsapp_enabled && settings?.whatsapp_number);
 
-export const cartMessage = (settings, items, quote, destination) => {
+export const cartMessage = (settings, items, quote, destination, ref) => {
   const lines = items.map((i) => `- ${i.name}${i.kind === "combo" ? " (combo)" : ` ${fmtWeight(i.grams)}`} x ${i.qty} = ${rupee(i.unit_price * i.qty)}`);
   const extra = quote
     ? [`Items: ${rupee(quote.subtotal)}`, `Delivery (${destination === "india" ? "India" : "Abroad"}, ${fmtWeight(quote.weight_g)}): ${rupee(quote.delivery_fee)}`, `Total: ${rupee(quote.total)}`]
     : [];
-  return [settings.whatsapp_message, "", ...lines, "", ...extra, "", "Name:", "Delivery address:"].join("\n");
+  return [settings.whatsapp_message, ...(ref ? [`Order ref: ${ref}`] : []), "", ...lines, "", ...extra, "", "Name:", "Delivery address:"].join("\n");
 };
 
 const WaIcon = ({ className }) => (
@@ -37,14 +39,35 @@ export const WhatsAppFloat = ({ settings }) => {
 };
 
 export const WhatsAppCartButton = ({ settings, items, quote, destination }) => {
+  const [busy, setBusy] = useState(false);
   if (!waEnabled(settings) || !items.length) return null;
+  const send = async () => {
+    const win = window.open("", "_blank");
+    setBusy(true);
+    let ref = "";
+    try {
+      const { data } = await http.post("/whatsapp-orders", {
+        items: items.map((i) => ({ kind: i.kind, id: i.id, grams: i.grams || null, qty: i.qty })), destination,
+      });
+      ref = data.id;
+    } catch (err) {
+      toast.error(errMsg(err));
+      win?.close();
+      setBusy(false);
+      return;
+    }
+    const url = waLink(settings, cartMessage(settings, items, quote, destination, ref));
+    if (win) win.location.href = url;
+    else window.location.href = url;
+    setBusy(false);
+  };
   return (
-    <a
-      href={waLink(settings, cartMessage(settings, items, quote, destination))} target="_blank" rel="noopener noreferrer"
-      className="flex w-full items-center justify-center gap-2 rounded-full border border-[#25D366] py-3 text-sm font-bold text-[#25D366] transition-colors duration-200 hover:bg-[#25D366] hover:text-[#0A0F1D]"
+    <button
+      type="button" onClick={send} disabled={busy || !quote || quote.errors.length > 0}
+      className="flex w-full items-center justify-center gap-2 rounded-full border border-[#25D366] py-3 text-sm font-bold text-[#25D366] transition-colors duration-200 hover:bg-[#25D366] hover:text-[#0A0F1D] disabled:opacity-50"
       data-testid="cart-whatsapp-button"
     >
       <WaIcon className="h-4 w-4" /> Order this cart on WhatsApp
-    </a>
+    </button>
   );
 };
