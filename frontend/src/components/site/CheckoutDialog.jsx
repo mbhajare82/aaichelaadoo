@@ -68,7 +68,7 @@ export const CheckoutDialog = ({ open, onOpenChange, quote, lines, onPaid, setti
       const { data } = await http.post("/orders", { items: lines, destination, order_type: type, customer });
       const rzp = new window.Razorpay({
         key: data.key_id, amount: data.amount, currency: data.currency, order_id: data.razorpay_order_id,
-        name: "AaicheLadau", description: `Order ${data.order_id}`,
+        name: "AAICHELADOO", description: `Order ${data.order_id}`,
         prefill: { name: f.name, contact: f.phone, email: f.email },
         theme: { color: "#F59E0B" },
         handler: async (res) => {

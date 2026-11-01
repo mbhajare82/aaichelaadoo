@@ -378,7 +378,7 @@ async def laado_system_prompt() -> str:
         inc = ", ".join(f"{i['name']} {i['grams']}g" for i in cp["items"])
         lines.append(f"- {c['name']}: Rs {int(c['price'])} (includes: {inc})")
     combo_text = "\n".join(lines) or "- No combos available right now"
-    return f"""You are Laado, the friendly chat assistant of "AaicheLadau", a home-made Maharashtrian Diwali sweets and namkin kitchen in Warje, Pune.
+    return f"""You are Laado, the friendly chat assistant of "AAICHELADOO", a home-made Maharashtrian Diwali sweets and namkin kitchen in Warje, Pune.
 
 Your two jobs:
 1. Collect these details from the customer, one or two at a time, politely: full name, phone number, items they want (with approx weight/quantity), and delivery address.
@@ -452,7 +452,7 @@ async def chat_end(body: EndIn):
     if sess.get("ended"):
         return {"saved": True, "lead_id": sess.get("lead_id")}
     transcript = "\n".join(f"{m['role'].upper()}: {m['content']}" for m in sess["messages"])
-    prompt = f"""From this chat between a customer and Laado (assistant of AaicheLadau home-made sweets, Warje Pune), extract a lead.
+    prompt = f"""From this chat between a customer and Laado (assistant of AAICHELADOO home-made sweets, Warje Pune), extract a lead.
 Return ONLY a JSON object with keys:
 "name", "phone", "items", "address" (empty string if not given),
 "summary": 2-3 short lines summarising what the customer wants,

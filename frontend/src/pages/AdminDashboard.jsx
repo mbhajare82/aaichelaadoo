@@ -40,7 +40,7 @@ export default function AdminDashboard() {
     <div className="grid-paper min-h-screen text-slate-100" data-testid="admin-dashboard">
       <header className="sticky top-0 z-30 border-b border-amber-500/15 bg-[#0A0F1D]/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <Link to="/" className="font-cinzel text-lg font-bold text-amber-400" data-testid="admin-home-link">AaicheLadau · Admin</Link>
+          <Link to="/" className="font-cinzel text-lg font-bold text-amber-400" data-testid="admin-home-link">AAICHELADOO · Admin</Link>
           <button onClick={logout} className="flex items-center gap-1.5 rounded-full border border-slate-600 px-3 py-1.5 text-xs hover:border-amber-400" data-testid="admin-logout-button">
             <LogOut className="h-3.5 w-3.5" /> Logout
           </button>

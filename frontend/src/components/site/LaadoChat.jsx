@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { API, http } from "@/lib/api";
 
 const newSession = () => `s-${crypto.randomUUID()}`;
-const greeting = { role: "assistant", content: "Namaskar! I'm Laado from AaicheLadau. May I know your name, and what sweets or namkin you'd like?" };
+const greeting = { role: "assistant", content: "Namaskar! I'm Laado from AAICHELADOO. May I know your name, and what sweets or namkin you'd like?" };
 
 async function streamReply(sessionId, message, onDelta) {
   const res = await fetch(`${API}/chat/message`, {
@@ -105,7 +105,7 @@ export const LaadoChat = () => {
             <div className="flex items-center justify-between border-b border-slate-800 bg-[#1E3A8A] px-4 py-3">
               <div className="flex items-center gap-2.5">
                 <span className="grid h-9 w-9 place-items-center rounded-full bg-amber-500 font-cinzel font-bold text-[#0A0F1D]">L</span>
-                <div><p className="text-sm font-bold">Laado</p><p className="text-[11px] text-sky-200">AaicheLadau assistant</p></div>
+                <div><p className="text-sm font-bold">Laado</p><p className="text-[11px] text-sky-200">AAICHELADOO assistant</p></div>
               </div>
               <button onClick={endChat} disabled={ending || busy} className="rounded-full border border-amber-400/60 px-3 py-1 text-xs font-semibold text-amber-300 transition-colors duration-200 hover:bg-amber-500 hover:text-[#0A0F1D] disabled:opacity-50" data-testid="laado-end-chat-button">
                 {ending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "End chat"}
