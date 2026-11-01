@@ -16,6 +16,8 @@ from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Literal
 
 import asyncio
+import io
+from PIL import Image
 import bcrypt
 import jwt
 import razorpay
@@ -526,6 +528,10 @@ async def upload_photo(file: UploadFile = File(...)):
     data = await file.read()
     if len(data) > MAX_UPLOAD:
         raise HTTPException(400, "Photo is too large (max 5 MB)")
+    try:
+        Image.open(io.BytesIO(data)).verify()
+    except Exception:
+        raise HTTPException(400, "Please upload a JPG, PNG or WEBP photo")
     try:
         res = await asyncio.to_thread(put_object, f"aaicheladau/products/{new_id()}.{ext}", data, file.content_type)
     except Exception:

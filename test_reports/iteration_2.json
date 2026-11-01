@@ -1,0 +1,33 @@
+{
+  "summary": "Tested product photos and admin photo upload (iteration 2). Backend: 7/7 pytest passed: upload needs auth (401), .txt rejected (400), >5MB rejected (400), PNG upload then GET /api/files returns the same bytes and correct content-type, unknown file gives 404, create/edit product with an uploaded photo shows in /api/catalog, all 11 seeded /images/*.jpg files are reachable and different from each other. Frontend: the hero image loads. All 11 cards in the Sweets/Namkin/Healthy tabs show their own matching photo (naturalWidth 960, 4:3 object-cover crop looks fine). The admin Items table shows a thumbnail for every row. Add item flow works: uploading .txt shows the error toast 'Please upload a JPG, PNG or WEBP photo' and no preview; uploading a JPG shows the preview and the 'Photo uploaded' toast; saving TEST_Photo Laddu adds it to the public Sweets tab with its /api/files/ photo. Editing with a PNG updates the photo in the admin table and on the public page. Mobile 390px: cards look good with no horizontal overflow, and the admin form dialog fits. TEST item was deleted through the UI; seeded items are unchanged (11 items, all with /images/ paths).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/admin/upload", "issue": "Image type is checked only against the client-sent Content-Type header, not the file bytes. A non-image file sent with an image/png MIME type would be accepted and served back as image/png. Low risk because the endpoint is admin-only; consider checking the bytes with Pillow (Image.verify) or magic bytes."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin product form dialog (mobile 390px)", "issues": ["Dialog is full width (x=0, w=390) with no side margin, so it touches the screen edges. Minor cosmetic issue; consider w-[calc(100%-2rem)] with rounded corners."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_photo_upload.py", "/app/test_reports/pytest/pytest_photo.xml"],
+  "action_items": [
+    "Optional: check the bytes of uploaded files (Pillow) in addition to the Content-Type header",
+    "Optional: add side margin to the product form dialog on mobile",
+    "Optional: when an item's photo is replaced or the item is deleted, the old object stays in storage and in db.files (orphaned files). Consider soft-deleting them."
+  ],
+  "critical_code_review_comments": [
+    "Upload validation trusts file.content_type (client-controlled)",
+    "file.read() loads the whole upload before checking the size limit. Acceptable at 5MB, but streaming the read with a limit is safer.",
+    "Hero uses /images/besan_laddu.jpg (landscape 960x644) inside a 4:5 portrait box, so it is cropped heavily but still looks good. /images/laddu.jpg is no longer used."
+  ],
+  "updated_files": ["/app/backend/tests/test_photo_upload.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "Created TEST_API Photo Laddu (by pytest) and TEST_Photo Laddu (by the UI test); both deleted. Uploaded test objects remain in object storage and db.files (harmless).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Photo feature verified end to end. Run the regression test with: REACT_APP_BACKEND_URL=... pytest /app/backend/tests/test_photo_upload.py. Payment (Razorpay) is still intentionally not configured."
+}

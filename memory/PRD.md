@@ -16,6 +16,10 @@ User choices: Claude Sonnet 5.5 (Emergent key); Razorpay test mode first; delive
 - Admin: stats, leads table + detail/WhatsApp copy, items & stock (kg) CRUD, combos CRUD, orders + status, testimonials publish, delivery settings.
 - Seed: 11 sample items, 4 sample combos (sample prices/descriptions, editable).
 
+## Implemented (2026-11-01, iteration 2)
+- Generated a matching photo for each of the 11 seeded items (saved in frontend/public/images).
+- Admin photo upload for items (Emergent object storage, admin-only POST /api/admin/upload, public GET /api/files/{path}); JPG/PNG/WEBP up to 5 MB, file contents checked.
+
 ## Pending / Backlog
 - P0: Real Razorpay test keys (saved values are invalid placeholders) then test payment success flow.
 - P1: Razorpay webhook for payments where browser closes before verify; per-item real photos.
