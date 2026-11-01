@@ -1,0 +1,18 @@
+{
+  "summary": "Tested Diwali/Regular order types end-to-end. Backend: 10/10 new pytest cases pass (deadline open/closed/today boundary, diwali 400 when closed, regular/default 503 payment, invalid order_type 422, bad deadline format 422, settings auth 401, admin orders return order_type without _id). Old regression suite 26/26 pass. Frontend: banner countdown to 8 Nov plus note 'Last date for Diwali orders: 5 November'. Checkout picker has Diwali selected by default and sends order_type 'diwali', which gives a 503 toast. With the deadline set to 2026-10-01 from the admin Delivery tab, the banner shows 'Diwali orders closed — regular orders welcome', the Diwali button is disabled, Regular is selected, and the POST sends 'regular'. Admin Orders tags show Diwali/Regular and the filter counts All(2)/Diwali(1)/Regular(1) filter correctly. The settings save keeps rates and rounding (1.25kg abroad round_up = ₹1400). The mobile 390px banner wraps cleanly with no horizontal overflow.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/backend/tests/test_diwali_order_type.py", "/app/backend/tests/test_aaicheladau_api.py", "/app/test_reports/pytest/pytest_diwali.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Order-type buttons lack aria-pressed/role=radio for accessibility (minor).",
+    "diwali_open uses string comparison of ISO dates in IST, which is correct, and the deadline day itself counts as open (verified).",
+    "CheckoutDialog initial orderType state depends on settings at mount; it is guarded by `type = diwaliOpen ? orderType : 'regular'`, so it is safe."
+  ],
+  "updated_files": ["/app/backend/tests/test_diwali_order_type.py (new)", "/app/backend/tests/test_aaicheladau_api.py (test_exact_rounding restore now includes diwali_deadline; previously the restore PUT got a 422 and left rounding='exact')"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "Temporarily inserted ALTEST01/ALTEST02 (and ALPYT01/02 in pytest) into orders; all deleted. Settings restored to india 250, abroad 450, round_up, deadline 2026-11-05.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Run pytest with `-n 0` (pytest.ini enables xdist; parallel classes race on shared settings). Settings PUT requires diwali_deadline. Razorpay is intentionally not configured, so /api/orders returning 503 after validation is expected."
+}

@@ -100,7 +100,7 @@ class TestCatalog:
             q = requests.post(f"{API}/cart/quote", json={"items": items, "destination": "india"}).json()
             assert q["delivery_fee"] == 375
         finally:
-            requests.put(f"{API}/admin/settings", headers=H, json={k: orig[k] for k in ("india_per_kg", "abroad_extra_per_kg", "rounding")})
+            requests.put(f"{API}/admin/settings", headers=H, json={k: orig[k] for k in ("india_per_kg", "abroad_extra_per_kg", "rounding", "diwali_deadline")})
 
     def test_combo_quote(self, catalog):
         c = next(c for c in catalog["combos"] if c["price"] == 599)

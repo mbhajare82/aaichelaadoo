@@ -21,6 +21,7 @@ User choices: Claude Sonnet 5.5 (Emergent key); Razorpay test mode first; delive
 - Admin photo upload for items (Emergent object storage, admin-only POST /api/admin/upload, public GET /api/files/{path}); JPG/PNG/WEBP up to 5 MB, file contents checked.
 - Generated photos for the 4 combo boxes; combos have an `image` field, shown on combo cards; admin can upload/change combo photos.
 - Diwali countdown banner at top of landing (Lakshmi Puja dates 2026-11-08, 2027-10-29, 2028-10-17 IST; shows greeting on the day, hides after last date).
+- Diwali vs Regular orders: checkout picker (order_type), admin-editable Diwali order deadline (default 2026-11-05, inclusive, IST) in Delivery tab; after deadline only Regular allowed (server-enforced); banner shows last date / closed note; admin Orders tab tags + All/Diwali/Regular filter.
 
 ## Pending / Backlog
 - P0: Real Razorpay test keys (saved values are invalid placeholders) then test payment success flow.
