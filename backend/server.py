@@ -127,7 +127,12 @@ async def me(user: dict = Depends(require_admin)):
 
 
 # ---------------- Settings & pricing ----------------
-DEFAULT_SETTINGS = {"india_per_kg": 250, "abroad_extra_per_kg": 450, "rounding": "round_up"}
+DEFAULT_SETTINGS = {"india_per_kg": 250, "abroad_extra_per_kg": 450, "rounding": "round_up", "diwali_deadline": "2026-11-05"}
+IST = timezone(timedelta(hours=5, minutes=30))
+
+
+def diwali_open(s: dict) -> bool:
+    return datetime.now(IST).date().isoformat() <= s.get("diwali_deadline", "")
 
 
 async def get_settings() -> dict:
@@ -225,9 +230,10 @@ async def catalog():
     products = await db.products.find({}, {"_id": 0}).to_list(1000)
     pmap = {p["id"]: p for p in products}
     combos = await db.combos.find({"active": True}, {"_id": 0}).sort("price", 1).to_list(500)
+    s = await get_settings()
     return {"products": [product_public(p) for p in products if p.get("active", True)],
             "combos": [combo_public(c, pmap) for c in combos],
-            "settings": await get_settings()}
+            "settings": {**s, "diwali_open": diwali_open(s)}}
 
 
 @api.post("/cart/quote")
@@ -256,6 +262,7 @@ class Customer(BaseModel):
 class OrderIn(BaseModel):
     items: List[CartLine] = Field(min_length=1)
     destination: Literal["india", "abroad"]
+    order_type: Literal["diwali", "regular"] = "regular"
     customer: Customer
 
 
@@ -272,6 +279,8 @@ def short_order_id() -> str:
 
 @api.post("/orders")
 async def create_order(body: OrderIn):
+    if body.order_type == "diwali" and not diwali_open(await get_settings()):
+        raise HTTPException(400, "Diwali orders are closed now. Please choose Regular order.")
     q = await build_quote(body.items, body.destination)
     if q["errors"]:
         raise HTTPException(400, q["errors"][0])
@@ -285,7 +294,7 @@ async def create_order(body: OrderIn):
     except Exception as e:
         logger.exception("razorpay order create failed")
         raise HTTPException(502, f"Payment gateway error: {e}")
-    doc = {"id": oid, "customer": body.customer.model_dump(), "destination": body.destination,
+    doc = {"id": oid, "order_type": body.order_type, "customer": body.customer.model_dump(), "destination": body.destination,
            "lines": q["lines"], "subtotal": q["subtotal"], "weight_g": q["weight_g"],
            "delivery_fee": q["delivery_fee"], "total": q["total"], "stock_need": q["stock_need"],
            "status": "pending", "razorpay_order_id": rz_order["id"], "created_at": now_iso()}
@@ -688,6 +697,7 @@ class SettingsIn(BaseModel):
     india_per_kg: float = Field(ge=0)
     abroad_extra_per_kg: float = Field(ge=0)
     rounding: Literal["round_up", "exact"]
+    diwali_deadline: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
 
 
 @admin.get("/settings")

@@ -93,7 +93,7 @@ export const CartSheet = ({ settings, onOrderPaid }) => {
             </div>
           </>
         )}
-        <CheckoutDialog open={checkout} onOpenChange={setCheckout} quote={quote} lines={toLines(items)} onPaid={onOrderPaid} />
+        <CheckoutDialog open={checkout} onOpenChange={setCheckout} quote={quote} lines={toLines(items)} onPaid={onOrderPaid} settings={settings} />
       </SheetContent>
     </Sheet>
   );

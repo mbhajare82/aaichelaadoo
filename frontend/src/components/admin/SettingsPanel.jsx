@@ -17,7 +17,7 @@ export const SettingsPanel = () => {
     try {
       const { data } = await http.put("/admin/settings", { ...s, india_per_kg: Number(s.india_per_kg), abroad_extra_per_kg: Number(s.abroad_extra_per_kg) });
       setS(data);
-      toast.success("Delivery charges saved");
+      toast.success("Settings saved");
     } catch (err) {
       toast.error(errMsg(err));
     }
@@ -37,6 +37,8 @@ export const SettingsPanel = () => {
         ))}
       </div>
       <p className="text-xs text-slate-400">Abroad orders pay India rate + abroad extra per kg.</p>
+      <div><Label className="text-xs">Last date to place Diwali orders</Label><Input type="date" required value={s.diwali_deadline} onChange={(e) => setS({ ...s, diwali_deadline: e.target.value })} className={inputCls} data-testid="settings-diwali-deadline" /></div>
+      <p className="text-xs text-slate-400">After this date customers can only place Regular orders.</p>
       <button className="rounded-full bg-amber-500 px-6 py-2.5 text-sm font-bold text-[#0A0F1D]" data-testid="settings-save-button">Save</button>
     </form>
   );

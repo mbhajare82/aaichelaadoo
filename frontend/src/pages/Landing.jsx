@@ -30,7 +30,7 @@ export default function Landing() {
 
   return (
     <div className="grid-paper grain relative min-h-screen text-slate-100" data-testid="landing-page">
-      <CountdownBanner />
+      <CountdownBanner settings={catalog.settings} />
       <Header />
       <main className="relative z-10">
         <Hero settings={catalog.settings} />

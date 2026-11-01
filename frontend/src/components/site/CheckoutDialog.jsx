@@ -24,8 +24,34 @@ const Field = ({ id, label, children }) => (
   <div className="space-y-1.5"><Label htmlFor={id} className="text-xs text-slate-300">{label}</Label>{children}</div>
 );
 
-export const CheckoutDialog = ({ open, onOpenChange, quote, lines, onPaid }) => {
+export const fmtDeadline = (d) =>
+  d ? new Date(`${d}T00:00:00+05:30`).toLocaleDateString("en-IN", { day: "numeric", month: "long", timeZone: "Asia/Kolkata" }) : "";
+
+const OrderTypePicker = ({ value, onChange, diwaliOpen, deadline }) => (
+  <div className="space-y-1.5">
+    <Label className="text-xs text-slate-300">Order type</Label>
+    <div className="grid grid-cols-2 gap-2">
+      {[["diwali", "Diwali order"], ["regular", "Regular order"]].map(([k, l]) => (
+        <button
+          type="button" key={k} disabled={k === "diwali" && !diwaliOpen} onClick={() => onChange(k)}
+          className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40 ${value === k ? "border-amber-400 bg-amber-500/15 text-amber-300" : "border-slate-600 text-slate-300 hover:border-amber-400"}`}
+          data-testid={`order-type-${k}`}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
+    <p className="text-xs text-slate-400" data-testid="order-type-note">
+      {diwaliOpen ? `Diwali orders close on ${fmtDeadline(deadline)}. Regular orders are welcome any time.` : "Diwali orders are closed. Regular orders are welcome."}
+    </p>
+  </div>
+);
+
+export const CheckoutDialog = ({ open, onOpenChange, quote, lines, onPaid, settings }) => {
   const { destination, clear } = useCart();
+  const diwaliOpen = !!settings?.diwali_open;
+  const [orderType, setOrderType] = useState(diwaliOpen ? "diwali" : "regular");
+  const type = diwaliOpen ? orderType : "regular";
   const [f, setF] = useState(empty);
   const [busy, setBusy] = useState(false);
   const [paidId, setPaidId] = useState(null);
@@ -39,7 +65,7 @@ export const CheckoutDialog = ({ open, onOpenChange, quote, lines, onPaid }) => 
       const ok = await loadRazorpay();
       if (!ok) throw new Error("Could not load the payment window. Check your internet and retry.");
       const customer = { ...f, country: destination === "india" ? "India" : f.country };
-      const { data } = await http.post("/orders", { items: lines, destination, customer });
+      const { data } = await http.post("/orders", { items: lines, destination, order_type: type, customer });
       const rzp = new window.Razorpay({
         key: data.key_id, amount: data.amount, currency: data.currency, order_id: data.razorpay_order_id,
         name: "AaicheLadau", description: `Order ${data.order_id}`,
@@ -99,6 +125,7 @@ export const CheckoutDialog = ({ open, onOpenChange, quote, lines, onPaid }) => 
               {destination === "abroad" && (
                 <Field id="co-country" label="Country"><Input id="co-country" required value={f.country === "India" ? "" : f.country} onChange={set("country")} className={inputCls} data-testid="checkout-country-input" /></Field>
               )}
+              <OrderTypePicker value={type} onChange={setOrderType} diwaliOpen={diwaliOpen} deadline={settings?.diwali_deadline} />
               <button type="submit" disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-full bg-amber-500 py-3 text-sm font-bold text-[#0A0F1D] transition-transform duration-200 hover:scale-[1.02] disabled:opacity-60" data-testid="checkout-pay-button">
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />} Pay {quote ? rupee(quote.total) : ""}
               </button>
