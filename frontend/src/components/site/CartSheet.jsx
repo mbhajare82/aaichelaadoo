@@ -4,6 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { useCart } from "@/context/CartContext";
 import { http, rupee, fmtWeight } from "@/lib/api";
 import { CheckoutDialog } from "./CheckoutDialog";
+import { WhatsAppCartButton } from "./WhatsApp";
 
 const toLines = (items) => items.map((i) => ({ kind: i.kind, id: i.id, grams: i.grams || null, qty: i.qty }));
 
@@ -90,6 +91,7 @@ export const CartSheet = ({ settings, onOrderPaid }) => {
               >
                 Checkout securely
               </button>
+              <WhatsAppCartButton settings={settings} items={items} quote={quote} destination={destination} />
             </div>
           </>
         )}

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { http, errMsg } from "@/lib/api";
 
 const inputCls = "border-slate-600 bg-slate-950 text-slate-100";
@@ -39,6 +41,14 @@ export const SettingsPanel = () => {
       <p className="text-xs text-slate-400">Abroad orders pay India rate + abroad extra per kg.</p>
       <div><Label className="text-xs">Last date to place Diwali orders</Label><Input type="date" required value={s.diwali_deadline} onChange={(e) => setS({ ...s, diwali_deadline: e.target.value })} className={inputCls} data-testid="settings-diwali-deadline" /></div>
       <p className="text-xs text-slate-400">After this date customers can only place Regular orders.</p>
+      <div className="space-y-3 border-t border-slate-700 pt-4" data-testid="settings-whatsapp-section">
+        <label className="flex items-center gap-2 text-sm font-semibold">
+          <Switch checked={!!s.whatsapp_enabled} onCheckedChange={(v) => setS({ ...s, whatsapp_enabled: v })} data-testid="settings-whatsapp-enabled" /> Accept orders on WhatsApp
+        </label>
+        <div><Label className="text-xs">WhatsApp number (10-digit Indian number, or with country code)</Label><Input inputMode="numeric" placeholder="e.g. 98XXXXXXXX" value={s.whatsapp_number || ""} onChange={(e) => setS({ ...s, whatsapp_number: e.target.value.replace(/\D/g, "") })} className={inputCls} data-testid="settings-whatsapp-number" /></div>
+        <div><Label className="text-xs">Opening message customers send</Label><Textarea maxLength={300} value={s.whatsapp_message || ""} onChange={(e) => setS({ ...s, whatsapp_message: e.target.value })} className={inputCls} data-testid="settings-whatsapp-message" /></div>
+        <p className="text-xs text-slate-400">When on, the shop shows an "Order on WhatsApp" button and a button in the cart that sends the cart details to this number.</p>
+      </div>
       <button className="rounded-full bg-amber-500 px-6 py-2.5 text-sm font-bold text-[#0A0F1D]" data-testid="settings-save-button">Save</button>
     </form>
   );

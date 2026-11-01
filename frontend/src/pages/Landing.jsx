@@ -10,6 +10,7 @@ import { Testimonials } from "@/components/site/Testimonials";
 import { Footer } from "@/components/site/Footer";
 import { LaadoChat } from "@/components/site/LaadoChat";
 import { CountdownBanner } from "@/components/site/CountdownBanner";
+import { WhatsAppFloat } from "@/components/site/WhatsApp";
 
 export default function Landing() {
   const [catalog, setCatalog] = useState({ products: [], combos: [], settings: null });
@@ -42,6 +43,7 @@ export default function Landing() {
       <Footer />
       <CartSheet settings={catalog.settings} onOrderPaid={load} />
       <LaadoChat />
+      <WhatsAppFloat settings={catalog.settings} />
     </div>
   );
 }

@@ -127,7 +127,9 @@ async def me(user: dict = Depends(require_admin)):
 
 
 # ---------------- Settings & pricing ----------------
-DEFAULT_SETTINGS = {"india_per_kg": 250, "abroad_extra_per_kg": 450, "rounding": "round_up", "diwali_deadline": "2026-11-05"}
+DEFAULT_SETTINGS = {"india_per_kg": 250, "abroad_extra_per_kg": 450, "rounding": "round_up", "diwali_deadline": "2026-11-05",
+                    "whatsapp_enabled": False, "whatsapp_number": "",
+                    "whatsapp_message": "Namaskar AAICHELADOO! I would like to place an order."}
 IST = timezone(timedelta(hours=5, minutes=30))
 
 
@@ -698,6 +700,9 @@ class SettingsIn(BaseModel):
     abroad_extra_per_kg: float = Field(ge=0)
     rounding: Literal["round_up", "exact"]
     diwali_deadline: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    whatsapp_enabled: bool = False
+    whatsapp_number: str = Field(default="", pattern=r"^(\d{10,15})?$")
+    whatsapp_message: str = Field(default="", max_length=300)
 
 
 @admin.get("/settings")
@@ -707,6 +712,8 @@ async def read_settings():
 
 @admin.put("/settings")
 async def save_settings(body: SettingsIn):
+    if body.whatsapp_enabled and not body.whatsapp_number:
+        raise HTTPException(400, "Add a WhatsApp number before turning WhatsApp orders on")
     await db.settings.update_one({"key": "delivery"}, {"$set": body.model_dump()}, upsert=True)
     return await get_settings()
 
