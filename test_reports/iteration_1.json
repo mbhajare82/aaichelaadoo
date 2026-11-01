@@ -1,0 +1,42 @@
+{
+  "summary": "Full E2E test of AaicheLadau. Backend: 26 pytest cases, 25 passed; the only failure is the brute-force lockout. Frontend: all 10 requested flows pass. Landing shows 4 combos and the category tabs work. Pack price updates. Cart fee is 500 for India and 1400 for Abroad (1.5 kg); with exact rounding it is 375. Checkout shows the 503 toast without crashing (expected, since the Razorpay keys are placeholders). Laado chat streams replies, gives the fallback line for unrelated questions and saves a Hot lead with summary and WhatsApp message (copy works). Feedback rejects a wrong phone and a duplicate, and a published testimonial shows publicly. Stock 0 shows Out of stock on the item and its combos. Admin combo add/edit/delete, order status change, 401 without auth and the 390px mobile layout all work.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/auth/login", "issue": "Brute-force lockout never triggers in this preview environment: 6 bad attempts all return 401 and none return 429. RCA: the identifier is f'{request.client.host}:{email}', and client.host is the rotating ingress pod IP (seen 10.30.130.133 and 10.219.0.199), so the count is split across records. Fix: use the first IP in the X-Forwarded-For header, or key on email only. Also, once a lock expires the count stays >=5, so the next single failure locks again immediately; reset the count when locked_until has passed."},
+      {"endpoint": "PATCH /api/admin/orders/{id}, PATCH /api/admin/testimonials/{id}, DELETE products/combos", "issue": "Return ok:true even when the id does not exist (should return 404). Deleting a product used in a combo leaves the combo showing 'Item removed' and marked out of stock, with no warning."},
+      {"endpoint": "CORS", "issue": "CORS_ORIGINS='*' with allow_credentials=True. The playbook asks for explicit origins."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "LaadoChat Bubble", "issue": "Assistant replies show raw markdown (e.g. '- **Name:** TEST_Priya') because the LLM uses markdown and the bubble renders plain text. Either render the markdown or tell the model in the system prompt to reply in plain text without markdown.", "selector": "[data-testid^='laado-msg-']", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Product images", "issues": ["The Karanji card uses healthy2.jpg, which shows dark round balls and not the crescent pastry", "Besan and Rava Laddu share the same image; Shankarpali and Kadboli reuse namkin.jpg"]},
+      {"screen": "Mobile hero (390px)", "issues": ["The dashed decorative border of the hero image touches or overflows the left edge of the screen (no page scroll overflow, scrollWidth=390)"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_aaicheladau_api.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Fix the login lockout identifier (use X-Forwarded-For or email) and reset the count after a lock expires",
+    "Render markdown in Laado chat bubbles, or tell the model to reply in plain text",
+    "Return 404 from the order status / testimonial publish / delete endpoints when the id is missing",
+    "Replace mismatched product images (Karanji in particular)"
+  ],
+  "critical_code_review_comments": [
+    "server.py is 681 lines, close to the 700-line limit; consider splitting it into routers (auth, catalog, orders, chat, admin)",
+    "Public /api/testimonials exposes order_id; together with the name this could let someone guess order IDs. Consider hiding order_id",
+    "Pending orders do not reserve stock; two buyers can both pay for the last stock (stock is decremented with a floor of 0)",
+    "LeadDialog / LeadsPanel / OrdersPanel GET calls have no error handling (there is no catch)"
+  ],
+  "updated_files": ["/app/backend/tests/test_aaicheladau_api.py"],
+  "success_rate": {"backend": "96% (25/26)", "frontend": "100% of requested flows"},
+  "test_credentials": "mbhajare@gmail.com / Laado@5wzuqCFi (works; bcrypt hash starts with $2b$; httpOnly cookie is set; the seed only inserts the admin if missing)",
+  "seed_data_creation": "Created test orders ALTEST01/02/03, testimonials, a TEST_Priya lead, chat sessions and TEST_ products/combos. All are cleaned up. Settings are back to round_up 250/450 and Besan Laddu is back to 700/kg with 10 kg stock.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run with: REACT_APP_BACKEND_URL=... pytest /app/backend/tests/. The suite inserts and cleans its own ALTEST orders through pymongo. Razorpay keys are placeholders, so a 503 is expected. Lockout test fails until the identifier is fixed. A product's DB id is not the testid prefix shown on the page; get product ids from /api/catalog.",
+  "rca of the issue": "Lockout: request.client.host varies per ingress pod, so login_attempts are split across records (see the db.login_attempts records with different IP prefixes for the same email)."
+}

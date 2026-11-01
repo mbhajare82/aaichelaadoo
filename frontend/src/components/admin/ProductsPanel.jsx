@@ -56,8 +56,12 @@ export const ProductsPanel = () => {
   }, []);
   const del = async (p) => {
     if (!window.confirm(`Delete ${p.name}?`)) return;
-    await http.delete(`/admin/products/${p.id}`);
-    load();
+    try {
+      await http.delete(`/admin/products/${p.id}`);
+      load();
+    } catch (err) {
+      toast.error(errMsg(err));
+    }
   };
   return (
     <div className="space-y-4">

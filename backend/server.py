@@ -90,10 +90,14 @@ class LoginIn(BaseModel):
 @api.post("/auth/login")
 async def login(body: LoginIn, request: Request, response: Response):
     email = body.email.strip().lower()
-    ident = f"{request.client.host if request.client else 'x'}:{email}"
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "x")
+    ident = f"{ip}:{email}"
     att = await db.login_attempts.find_one({"identifier": ident})
-    if att and att.get("count", 0) >= 5 and att.get("locked_until", "") > now_iso():
-        raise HTTPException(429, "Too many attempts. Try again in 15 minutes.")
+    if att and att.get("locked_until"):
+        if att["locked_until"] > now_iso():
+            raise HTTPException(429, "Too many attempts. Try again in 15 minutes.")
+        await db.login_attempts.delete_one({"identifier": ident})
+        att = None
     user = await db.users.find_one({"email": email})
     if not user or not verify_password(body.password, user["password_hash"]):
         count = (att or {}).get("count", 0) + 1
@@ -371,6 +375,7 @@ Your two jobs:
 Strict rules:
 - For ANY question you cannot answer from the combo information above (individual item prices, delivery times, ingredients, discounts, custom orders, anything else), reply exactly: "{FALLBACK_LINE}" and then gently continue collecting the missing details.
 - Never invent prices, items, offers or policies.
+- Reply in plain text only: no markdown, no asterisks, no bullet symbols.
 - Keep replies short (1-3 sentences), warm, in simple Indian English. You may use a light Marathi touch like "Namaskar".
 - Once you have name, phone, items and address, confirm them back in one short message and tell the customer they can tap "End chat" to submit, and our team will call back."""
 
@@ -523,7 +528,11 @@ async def edit_product(pid: str, body: ProductIn):
 
 @admin.delete("/products/{pid}")
 async def delete_product(pid: str):
-    await db.products.delete_one({"id": pid})
+    if await db.combos.find_one({"items.product_id": pid}):
+        raise HTTPException(400, "This item is part of a combo. Remove it from the combo first, or hide it instead.")
+    res = await db.products.delete_one({"id": pid})
+    if not res.deleted_count:
+        raise HTTPException(404, "Product not found")
     return {"ok": True}
 
 
@@ -564,7 +573,9 @@ async def edit_combo(cid: str, body: ComboIn):
 
 @admin.delete("/combos/{cid}")
 async def delete_combo(cid: str):
-    await db.combos.delete_one({"id": cid})
+    res = await db.combos.delete_one({"id": cid})
+    if not res.deleted_count:
+        raise HTTPException(404, "Combo not found")
     return {"ok": True}
 
 
@@ -579,7 +590,9 @@ class StatusIn(BaseModel):
 
 @admin.patch("/orders/{oid}")
 async def order_status(oid: str, body: StatusIn):
-    await db.orders.update_one({"id": oid}, {"$set": {"status": body.status}})
+    res = await db.orders.update_one({"id": oid}, {"$set": {"status": body.status}})
+    if not res.matched_count:
+        raise HTTPException(404, "Order not found")
     return {"ok": True}
 
 
@@ -594,7 +607,9 @@ class PublishIn(BaseModel):
 
 @admin.patch("/testimonials/{tid}")
 async def publish_testimonial(tid: str, body: PublishIn):
-    await db.testimonials.update_one({"id": tid}, {"$set": {"published": body.published}})
+    res = await db.testimonials.update_one({"id": tid}, {"$set": {"published": body.published}})
+    if not res.matched_count:
+        raise HTTPException(404, "Testimonial not found")
     return {"ok": True}
 
 
