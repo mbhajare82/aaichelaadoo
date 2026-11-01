@@ -1,0 +1,136 @@
+{
+  "project_name": "AaicheLadau",
+  "app_type": "hybrid_fullstack",
+  "theme": {
+    "primary_concept": "Maharashtrian Homemade Faral & Diwali Sweets - Warje, Pune",
+    "color_mode": "dark_deep_blue_warm_yellow",
+    "emotional_archetype": "Warm Maharashtrian Tradition & Trustworthy Quality"
+  },
+  "colors": {
+    "background_primary": "#0A0F1D",
+    "background_secondary": "#111827",
+    "surface_card": "#1E293B",
+    "surface_card_border": "#334155",
+    "primary_deep_blue": "#1E3A8A",
+    "accent_warm_yellow": "#F59E0B",
+    "accent_gold_bright": "#FBBF24",
+    "accent_amber": "#D97706",
+    "text_primary": "#F8FAFC",
+    "text_secondary": "#94A3B8",
+    "text_muted": "#64748B",
+    "status": {
+      "hot_lead": {
+        "bg": "bg-rose-500/20",
+        "text": "text-rose-400",
+        "border": "border-rose-500/40"
+      },
+      "warm_lead": {
+        "bg": "bg-amber-500/20",
+        "text": "text-amber-400",
+        "border": "border-amber-500/40"
+      },
+      "cold_lead": {
+        "bg": "bg-sky-500/20",
+        "text": "text-sky-400",
+        "border": "border-sky-500/40"
+      },
+      "out_of_stock": {
+        "bg": "bg-red-500/20",
+        "text": "text-red-400",
+        "border": "border-red-500/40"
+      },
+      "in_stock": {
+        "bg": "bg-emerald-500/20",
+        "text": "text-emerald-400",
+        "border": "border-emerald-500/40"
+      }
+    }
+  },
+  "typography": {
+    "headline_font": "Outfit, sans-serif",
+    "body_font": "Plus Jakarta Sans, sans-serif",
+    "accent_font": "Cinzel, serif",
+    "hierarchies": {
+      "h1_hero": "text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight",
+      "h2_section": "text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight",
+      "h3_card": "text-xl sm:text-2xl font-semibold",
+      "body": "text-sm sm:text-base text-slate-300 leading-relaxed",
+      "label": "text-xs font-semibold tracking-wider uppercase text-amber-400"
+    }
+  },
+  "grids_and_layouts": {
+    "mode": "mobile_first_bento",
+    "containers": {
+      "page": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12",
+      "hero_bento": "grid grid-cols-1 md:grid-cols-12 gap-6",
+      "product_grid": "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6",
+      "combo_grid": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6",
+      "dashboard_grid": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-xl bg-slate-900/80 border border-amber-500/20 shadow-2xl",
+    "gold_glow_border": "border border-amber-500/30 hover:border-amber-400 transition-all duration-300 shadow-[0_0_20px_rgba(245,158,11,0.15)]",
+    "card_hover": "hover:-translate-y-1 transition-transform duration-200 ease-out shadow-lg hover:shadow-amber-500/10"
+  },
+  "motion": {
+    "library": "framer-motion",
+    "micro_interactions": {
+      "hover": "whileHover={{ scale: 1.02 }}",
+      "tap": "whileTap={{ scale: 0.97 }}",
+      "fade_in": "initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}"
+    }
+  },
+  "media": {
+    "image_urls": {
+      "hero_faral": "https://images.unsplash.com/photo-1635952346904-95f2ccfcd029?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxNzV8MHwxfHNlYXJjaHwzfHxJbmRpYW4lMjB0cmFkaXRpb25hbCUyMHN3ZWV0cyUyMGxhZGR1JTIwR3VsYWIlMjBKYW11biUyMGRpd2FsaSUyMGZvb2R8ZW58MHx8fHwxNzkzNTIwODY1fDA&ixlib=rb-4.1.0&q=85",
+      "sweets_laddu": "https://images.unsplash.com/photo-1635952346904-95f2ccfcd029?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxNzV8MHwxfHNlYXJjaHwzfHxJbmRpYW4lMjB0cmFkaXRpb25hbCUyMHN3ZWV0cyUyMGxhZGR1JTIwR3VsYWIlMjBKYW11biUyMGRpd2FsaSUyMGZvb2R8ZW58MHx8fHwxNzkzNTIwODY1fDA&ixlib=rb-4.1.0&q=85",
+      "namkeen_chivda": "https://images.unsplash.com/photo-1605764803170-c20b43be4d00?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNDR8MHwxfHNlYXJjaHwzfHxJbmRpYW4lMjBzbmFja3MlMjBzcGljeSUyMHZpc3VhbCUyMGZvb2QlMjBkaXdhbGl8ZW58MHx8fHwxNzkzNTIwODY4fDA&ixlib=rb-4.1.0&q=85",
+      "healthy_snacks": "https://images.unsplash.com/photo-1652595802737-56d08ad31f09?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNDR8MHwxfHNlYXJjaHwyfHxJbmRpYW4lMjBzbmFja3MlMjBzcGljeSUyMHZpc3VhbCUyMGZvb2QlMjBkaXdhbGl8ZW58MHx8fHwxNzkzNTIwODY4fDA&ixlib=rb-4.1.0&q=85",
+      "diwali_feast": "https://images.unsplash.com/photo-1710599637395-e29f3fdc3c4d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNDR8MHwxfHNlYXJjaHw0fHxJbmRpYW4lMjBzbmFja3MlMjBzcGljeSUyMHZpc3VhbCUyMGZvb2QlMjBkaXdhbGl8ZW58MHx8fHwxNzkzNTIwODY4fDA&ixlib=rb-4.1.0&q=85"
+    }
+  },
+  "key_features_and_components": {
+    "public_landing": {
+      "hero_section": "Deep blue gradient with warm yellow accent badge 'Homemade in Warje, Pune', headline highlighting authentic Pure Desi Ghee Maharashtrian Faral, quick stats (100% Homemade, Pure Ghee, Fast Delivery).",
+      "category_tabs": "Sweets (Besan Laddu, Dink Laddu, Rava Laddu, Karanji, Modak), Namkeen (Poha Chivda, Shankarpali, Bhajani Chakli, Sev), Healthy (Sugar-free Methi Laddu, Oats Laddu, Multi-grain Chivda).",
+      "combo_offers": "Cards for Rs 599, Rs 999, Rs 1499, Rs 1999 with explicit item list & weight limit breakdown, Add to Cart button.",
+      "product_card": "Includes weight selector (250g, 500g, 1kg), price auto-update, stock status badge ('Out of Stock' if weight stock is 0), data-testid attributes.",
+      "cart_drawer": "Slide-over drawer with item list, weight total (kg), delivery destination toggle (India vs Abroad), dynamic fee calculator (India: Rs 250/KG or Rs 250 flat under 1kg; Abroad: +Rs 450/KG), final total, Razorpay checkout button.",
+      "laado_chat_widget": "Floating bottom-right assistant avatar 'Laado'. Collects Name, Phone, Items required, Delivery Address. Answers pricing for Rs 599/999/1499/1999 combos. Anything else answers 'Aaiche Laado will call back for serving you...'. Saves lead with 2-3 line summary and label (Hot/Warm/Cold).",
+      "order_feedback_and_testimonials": "Form to submit feedback (Order ID, Phone, Ratings for Taste, Price, Nourishment, Comments). Published Testimonials carousel/grid at the bottom."
+    },
+    "admin_dashboard": {
+      "login_modal": "Simple PIN or Password login (e.g., admin / admin123) for store owners.",
+      "overview_stats": "Total Leads, Hot Leads this week, Total Orders, Revenue, Low Stock Alerts.",
+      "lead_table": "Table with Hot (Rose badge), Warm (Amber badge), Cold (Sky badge) labels. Click row to open Lead Detail Modal with summary + 'Copy Ready WhatsApp Message' button in friendly Indian English.",
+      "product_stock_manager": "Add/Edit products, update price per kg/250g, update available stock weight (in KG), publish/unpublish toggle.",
+      "testimonial_manager": "Approve / Publish / Hide customer order feedback to show on public landing page."
+    }
+  },
+  "instructions_to_main_agent": [
+    "Use JavaScript (.js or .jsx) files only. Do NOT use TypeScript (.tsx).",
+    "Ensure all interactive elements have data-testid attributes (e.g., data-testid='add-to-cart-btn-1', data-testid='laado-chat-input', data-testid='checkout-razorpay-btn').",
+    "Implement the Laado Chat Widget faithfully with strict prompt rules: answers Rs 599, Rs 999, Rs 1499, Rs 1999 combo questions; responds 'Aaiche Laado will call back for serving you...' for unsupported queries; saves lead with Hot/Warm/Cold label and 2-3 line summary upon completing name/phone/items/address collection.",
+    "Implement dynamic delivery fee calculation: India delivery is Rs 250/KG (or Rs 250 for <1KG); Abroad delivery adds Rs 450/KG extra.",
+    "Razorpay test mode setup: load Razorpay SDK dynamically and trigger test payment workflow with success toast using Sonner.",
+    "Admin dashboard must allow managing stock weights. When stock hits 0, display 'Out of stock' badge on product cards and disable 'Add to Cart'.",
+    "Ensure dark deep blue theme (#0A0F1D background, #1E293B card surface) with warm golden yellow accents (#F59E0B / #FBBF24) and high contrast text readability everywhere."
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "You tend to converge toward generic outputs. Avoid this: make creative, distinctive frontends that surprise and delight.",
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur).",
+    "You MUST NOT apply universal transition (e.g. transition: all). Always add transitions for specific interactive elements.",
+    "You MUST NOT center align the app container (.App { text-align: center; }).",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style.",
+    "NEVER use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯 for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Subtle grain textures, selection states, and loading animations separate good from extraordinary.",
+    "Prioritize using pre-existing components from src/components/ui when applicable.",
+    "Use sonner for toasts (located in /app/src/components/ui/sonner.js or similar)."
+  ]
+}

@@ -1,0 +1,95 @@
+import { useEffect, useState } from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { http, rupee, errMsg } from "@/lib/api";
+
+const blank = { name: "", category: "sweets", description: "", image: "", price_per_kg: 600, stock_grams: 5000, active: true };
+const inputCls = "border-slate-600 bg-slate-950 text-slate-100";
+
+const ProductForm = ({ initial, onSaved, onClose }) => {
+  const [f, setF] = useState({ ...initial, stock_kg: initial.stock_grams / 1000 });
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const save = async (e) => {
+    e.preventDefault();
+    const body = { name: f.name, category: f.category, description: f.description, image: f.image, active: f.active,
+      price_per_kg: Number(f.price_per_kg), stock_grams: Math.round(Number(f.stock_kg) * 1000) };
+    try {
+      if (initial.id) await http.put(`/admin/products/${initial.id}`, body);
+      else await http.post("/admin/products", body);
+      toast.success("Item saved");
+      onSaved();
+      onClose();
+    } catch (err) {
+      toast.error(errMsg(err));
+    }
+  };
+  return (
+    <form onSubmit={save} className="space-y-3">
+      <div><Label className="text-xs">Name</Label><Input required value={f.name} onChange={set("name")} className={inputCls} data-testid="product-form-name" /></div>
+      <div><Label className="text-xs">Category</Label>
+        <select value={f.category} onChange={set("category")} className="h-10 w-full rounded-md border border-slate-600 bg-slate-950 px-3 text-sm" data-testid="product-form-category">
+          <option value="sweets">Sweets</option><option value="namkin">Namkin</option><option value="healthy">Healthy food</option>
+        </select>
+      </div>
+      <div><Label className="text-xs">Description</Label><Input value={f.description} onChange={set("description")} className={inputCls} data-testid="product-form-description" /></div>
+      <div><Label className="text-xs">Image URL</Label><Input value={f.image} onChange={set("image")} placeholder="/images/laddu.jpg" className={inputCls} data-testid="product-form-image" /></div>
+      <div className="grid grid-cols-2 gap-3">
+        <div><Label className="text-xs">Price per kg (₹)</Label><Input required type="number" min="1" step="1" value={f.price_per_kg} onChange={set("price_per_kg")} className={inputCls} data-testid="product-form-price" /></div>
+        <div><Label className="text-xs">Stock available (kg)</Label><Input required type="number" min="0" step="0.05" value={f.stock_kg} onChange={set("stock_kg")} className={inputCls} data-testid="product-form-stock" /></div>
+      </div>
+      <label className="flex items-center gap-2 text-sm"><Switch checked={f.active} onCheckedChange={(v) => setF({ ...f, active: v })} data-testid="product-form-active" /> Show on website</label>
+      <button className="w-full rounded-full bg-amber-500 py-2.5 text-sm font-bold text-[#0A0F1D]" data-testid="product-form-save">Save item</button>
+    </form>
+  );
+};
+
+export const ProductsPanel = () => {
+  const [list, setList] = useState([]);
+  const [edit, setEdit] = useState(null);
+  const load = () => http.get("/admin/products").then(({ data }) => setList(data));
+  useEffect(() => {
+    load();
+  }, []);
+  const del = async (p) => {
+    if (!window.confirm(`Delete ${p.name}?`)) return;
+    await http.delete(`/admin/products/${p.id}`);
+    load();
+  };
+  return (
+    <div className="space-y-4">
+      <button onClick={() => setEdit(blank)} className="flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-[#0A0F1D]" data-testid="add-product-button"><Plus className="h-4 w-4" /> Add item</button>
+      <div className="overflow-x-auto rounded-2xl border border-slate-700 bg-[#1E293B]">
+        <table className="w-full min-w-[640px] text-left text-sm" data-testid="products-table">
+          <thead className="border-b border-slate-700 text-xs uppercase tracking-wider text-slate-400">
+            <tr><th className="p-4">Item</th><th className="p-4">Category</th><th className="p-4">Price/kg</th><th className="p-4">Stock</th><th className="p-4">Status</th><th className="p-4" /></tr>
+          </thead>
+          <tbody>
+            {list.map((p) => (
+              <tr key={p.id} className="border-b border-slate-800" data-testid={`admin-product-row-${p.id}`}>
+                <td className="p-4 font-semibold">{p.name}</td>
+                <td className="p-4 capitalize text-slate-300">{p.category}</td>
+                <td className="p-4">{rupee(p.price_per_kg)}</td>
+                <td className="p-4">{(p.stock_grams / 1000).toFixed(2)} kg {p.stock_grams < 250 && <span className="ml-1 rounded-full bg-red-500/20 px-2 py-0.5 text-xs text-red-400">Out of stock</span>}</td>
+                <td className="p-4 text-slate-400">{p.active ? "Visible" : "Hidden"}</td>
+                <td className="p-4"><div className="flex gap-2">
+                  <button onClick={() => setEdit(p)} className="rounded-full border border-slate-600 p-1.5 hover:border-amber-400" data-testid={`edit-product-${p.id}`}><Pencil className="h-3.5 w-3.5" /></button>
+                  <button onClick={() => del(p)} className="rounded-full border border-slate-600 p-1.5 hover:border-red-400" data-testid={`delete-product-${p.id}`}><Trash2 className="h-3.5 w-3.5" /></button>
+                </div></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Dialog open={!!edit} onOpenChange={(v) => !v && setEdit(null)}>
+        <DialogContent className="border-amber-500/20 bg-[#0F172A] text-slate-100" data-testid="product-form-dialog">
+          <DialogHeader><DialogTitle className="text-amber-400">{edit?.id ? "Edit item" : "Add item"}</DialogTitle></DialogHeader>
+          {edit && <ProductForm initial={edit} onSaved={load} onClose={() => setEdit(null)} />}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};

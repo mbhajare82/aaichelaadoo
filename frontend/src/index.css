@@ -1,0 +1,72 @@
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --background: 225 50% 8%;
+        --foreground: 210 40% 98%;
+        --card: 217 33% 17%;
+        --card-foreground: 210 40% 98%;
+        --popover: 222 47% 11%;
+        --popover-foreground: 210 40% 98%;
+        --primary: 38 92% 50%;
+        --primary-foreground: 225 50% 8%;
+        --secondary: 224 64% 33%;
+        --secondary-foreground: 210 40% 98%;
+        --muted: 217 33% 17%;
+        --muted-foreground: 215 20% 65%;
+        --accent: 224 64% 33%;
+        --accent-foreground: 210 40% 98%;
+        --destructive: 0 72% 51%;
+        --destructive-foreground: 210 40% 98%;
+        --border: 215 25% 27%;
+        --input: 215 25% 27%;
+        --ring: 38 92% 50%;
+        --radius: 0.9rem;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+        font-family: "Plus Jakarta Sans", sans-serif;
+        -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4 {
+        font-family: "Outfit", sans-serif;
+    }
+    ::selection {
+        background: #f59e0b;
+        color: #0a0f1d;
+    }
+}
+
+.font-cinzel { font-family: "Cinzel", serif; }
+.font-outfit { font-family: "Outfit", sans-serif; }
+
+.grid-paper {
+    background-color: #0a0f1d;
+    background-image:
+        linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+.grain::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+[data-debug-wrapper="true"] { display: contents !important; }
