@@ -10,7 +10,7 @@ import { http, rupee, errMsg } from "@/lib/api";
 const blank = { name: "", category: "sweets", description: "", image: "", price_per_kg: 600, stock_grams: 5000, active: true };
 const inputCls = "border-slate-600 bg-slate-950 text-slate-100";
 
-const PhotoPicker = ({ value, onChange }) => {
+export const PhotoPicker = ({ value, onChange }) => {
   const [busy, setBusy] = useState(false);
   const pick = async (e) => {
     const file = e.target.files?.[0];

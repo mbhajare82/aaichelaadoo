@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { http, rupee, fmtWeight, errMsg } from "@/lib/api";
+import { PhotoPicker } from "./ProductsPanel";
 
 const inputCls = "border-slate-600 bg-slate-950 text-slate-100";
 
@@ -14,7 +15,7 @@ const ComboForm = ({ initial, products, onSaved, onClose }) => {
   const setItem = (i, k, v) => setF({ ...f, items: f.items.map((it, j) => (j === i ? { ...it, [k]: v } : it)) });
   const save = async (e) => {
     e.preventDefault();
-    const body = { name: f.name, price: Number(f.price), description: f.description || "", active: f.active,
+    const body = { name: f.name, price: Number(f.price), description: f.description || "", image: f.image || "", active: f.active,
       items: f.items.map((it) => ({ product_id: it.product_id, grams: Number(it.grams) })) };
     try {
       if (initial.id) await http.put(`/admin/combos/${initial.id}`, body);
@@ -32,6 +33,7 @@ const ComboForm = ({ initial, products, onSaved, onClose }) => {
         <div><Label className="text-xs">Name</Label><Input required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className={inputCls} data-testid="combo-form-name" /></div>
         <div><Label className="text-xs">Price (₹)</Label><Input required type="number" min="1" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} className={inputCls} data-testid="combo-form-price" /></div>
       </div>
+      <PhotoPicker value={f.image} onChange={(image) => setF((cur) => ({ ...cur, image }))} />
       <Label className="text-xs">Items & weight limit (grams)</Label>
       {f.items.map((it, i) => (
         <div key={i} className="flex gap-2">
@@ -66,12 +68,12 @@ export const CombosPanel = () => {
   };
   return (
     <div className="space-y-4">
-      <button onClick={() => setEdit({ name: "", price: 999, description: "", active: true, items: [{ product_id: "", grams: 250 }] })} className="flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-[#0A0F1D]" data-testid="add-combo-button"><Plus className="h-4 w-4" /> Add combo</button>
+      <button onClick={() => setEdit({ name: "", price: 999, description: "", image: "", active: true, items: [{ product_id: "", grams: 250 }] })} className="flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-[#0A0F1D]" data-testid="add-combo-button"><Plus className="h-4 w-4" /> Add combo</button>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {list.map((c) => (
           <div key={c.id} className="rounded-2xl border border-slate-700 bg-[#1E293B] p-5" data-testid={`admin-combo-${c.id}`}>
             <div className="flex items-start justify-between">
-              <div><p className="font-semibold">{c.name} {!c.active && <span className="text-xs text-slate-500">(hidden)</span>}</p><p className="text-xl font-bold text-amber-400">{rupee(c.price)}</p></div>
+              <div className="flex items-center gap-3">{c.image && <img src={c.image} alt="" className="h-12 w-16 rounded-md object-cover" />}<div><p className="font-semibold">{c.name} {!c.active && <span className="text-xs text-slate-500">(hidden)</span>}</p><p className="text-xl font-bold text-amber-400">{rupee(c.price)}</p></div></div>
               <div className="flex gap-2">
                 <button onClick={() => setEdit({ ...c, items: c.items.map(({ product_id, grams }) => ({ product_id, grams })) })} className="rounded-full border border-slate-600 p-1.5 hover:border-amber-400" data-testid={`edit-combo-${c.id}`}><Pencil className="h-3.5 w-3.5" /></button>
                 <button onClick={() => del(c)} className="rounded-full border border-slate-600 p-1.5 hover:border-red-400" data-testid={`delete-combo-${c.id}`}><Trash2 className="h-3.5 w-3.5" /></button>

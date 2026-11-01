@@ -16,9 +16,15 @@ const ComboCard = ({ combo, i }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-      className="flex flex-col rounded-2xl border border-amber-500/30 bg-[#1E293B] p-6 shadow-[0_0_20px_rgba(245,158,11,0.08)] transition-transform duration-200 hover:-translate-y-1"
+      className="flex flex-col overflow-hidden rounded-2xl border border-amber-500/30 bg-[#1E293B] shadow-[0_0_20px_rgba(245,158,11,0.08)] transition-transform duration-200 hover:-translate-y-1"
       data-testid={`combo-card-${combo.price}`}
     >
+      {combo.image && (
+        <div className="aspect-[3/2] overflow-hidden bg-slate-800">
+          <img src={combo.image} alt={combo.name} className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" data-testid={`combo-image-${combo.price}`} />
+        </div>
+      )}
+      <div className="flex flex-1 flex-col p-6">
       <div className="flex items-center justify-between">
         <Gift className="h-6 w-6 text-amber-400" />
         {!combo.in_stock && <span className="rounded-full border border-red-500/40 bg-red-500/20 px-2 py-0.5 text-xs text-red-400" data-testid={`combo-out-of-stock-${combo.price}`}>Out of stock</span>}
@@ -43,6 +49,7 @@ const ComboCard = ({ combo, i }) => {
       >
         <Plus className="h-4 w-4" /> {combo.in_stock ? "Add combo" : "Out of stock"}
       </button>
+      </div>
     </motion.div>
   );
 };

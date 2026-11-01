@@ -615,6 +615,7 @@ class ComboIn(BaseModel):
     name: str = Field(min_length=2, max_length=80)
     price: float = Field(gt=0)
     description: str = ""
+    image: str = ""
     items: List[ComboItem] = Field(min_length=1)
     active: bool = True
 
@@ -750,6 +751,7 @@ async def startup():
                                           "active": True, "created_at": now_iso()})
         for name, price, items in SEED_COMBOS:
             await db.combos.insert_one({"id": new_id(), "name": name, "price": price, "description": "",
+                                        "image": f"/images/combo_{price}.jpg",
                                         "items": [{"product_id": ids[n], "grams": g} for n, g in items],
                                         "active": True, "created_at": now_iso()})
 
