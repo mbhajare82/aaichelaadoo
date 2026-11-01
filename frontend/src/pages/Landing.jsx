@@ -9,6 +9,7 @@ import { FeedbackSection } from "@/components/site/FeedbackSection";
 import { Testimonials } from "@/components/site/Testimonials";
 import { Footer } from "@/components/site/Footer";
 import { LaadoChat } from "@/components/site/LaadoChat";
+import { CountdownBanner } from "@/components/site/CountdownBanner";
 
 export default function Landing() {
   const [catalog, setCatalog] = useState({ products: [], combos: [], settings: null });
@@ -29,6 +30,7 @@ export default function Landing() {
 
   return (
     <div className="grid-paper grain relative min-h-screen text-slate-100" data-testid="landing-page">
+      <CountdownBanner />
       <Header />
       <main className="relative z-10">
         <Hero settings={catalog.settings} />
