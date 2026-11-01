@@ -26,6 +26,7 @@ User choices: Claude Sonnet 5.5 (Emergent key); Razorpay test mode first; delive
 - Placeholder logo (golden laddu with diya, AI-generated) at frontend/public/logo.png, logo192.png, favicon.png; used in header, footer, admin login/dashboard and browser tab. Replace those 3 files to change it.
 - WhatsApp ordering (click-to-chat wa.me, no API): admin Settings tab toggle + number + opening message (off by default, number empty); floating "Order on WhatsApp" button and "Order this cart on WhatsApp" in cart with items, delivery and total prefilled.
 - WhatsApp order log: cart WhatsApp button first logs the cart (server-priced) as WA-ref order, ref included in message; admin "WhatsApp orders" tab with status new/confirmed/delivered/cancelled, filter, customer name/phone/note; stock reduced on confirmed/delivered, restored on cancel/new.
+- Daily order summary email (Emergent managed Resend, backend/emailer.py) at 8 pm IST via .emergent/crons.yml -> POST /api/cron/daily-summary (bearer WEBHOOK_CRON_SECRET, idempotent via cron_runs, background send). Content: today's paid website orders, WhatsApp orders, items under 1 kg. Admin Settings: on/off, recipient (default mbhajare@gmail.com), "Send today's summary now".
 
 ## Pending / Backlog
 - P0: Real Razorpay test keys (saved values are invalid placeholders) then test payment success flow.

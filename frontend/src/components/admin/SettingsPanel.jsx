@@ -10,10 +10,22 @@ const inputCls = "border-slate-600 bg-slate-950 text-slate-100";
 
 export const SettingsPanel = () => {
   const [s, setS] = useState(null);
+  const [sending, setSending] = useState(false);
   useEffect(() => {
     http.get("/admin/settings").then(({ data }) => setS(data));
   }, []);
   if (!s) return null;
+  const sendNow = async () => {
+    setSending(true);
+    try {
+      const { data } = await http.post("/admin/daily-summary/send");
+      toast.success(`Summary sent to ${data.to}`);
+    } catch (err) {
+      toast.error(errMsg(err));
+    } finally {
+      setSending(false);
+    }
+  };
   const save = async (e) => {
     e.preventDefault();
     try {
@@ -48,6 +60,14 @@ export const SettingsPanel = () => {
         <div><Label className="text-xs">WhatsApp number (10-digit Indian number, or with country code)</Label><Input inputMode="numeric" placeholder="e.g. 98XXXXXXXX" value={s.whatsapp_number || ""} onChange={(e) => setS({ ...s, whatsapp_number: e.target.value.replace(/\D/g, "") })} className={inputCls} data-testid="settings-whatsapp-number" /></div>
         <div><Label className="text-xs">Opening message customers send</Label><Textarea maxLength={300} value={s.whatsapp_message || ""} onChange={(e) => setS({ ...s, whatsapp_message: e.target.value })} className={inputCls} data-testid="settings-whatsapp-message" /></div>
         <p className="text-xs text-slate-400">When on, the shop shows an "Order on WhatsApp" button and a button in the cart that sends the cart details to this number.</p>
+      </div>
+      <div className="space-y-3 border-t border-slate-700 pt-4" data-testid="settings-summary-section">
+        <label className="flex items-center gap-2 text-sm font-semibold">
+          <Switch checked={!!s.summary_enabled} onCheckedChange={(v) => setS({ ...s, summary_enabled: v })} data-testid="settings-summary-enabled" /> Daily order summary email (8 pm)
+        </label>
+        <div><Label className="text-xs">Send summary to</Label><Input type="email" value={s.summary_email || ""} onChange={(e) => setS({ ...s, summary_email: e.target.value.trim() })} className={inputCls} data-testid="settings-summary-email" /></div>
+        <p className="text-xs text-slate-400">Every evening: today's paid website orders, WhatsApp orders and items under 1 kg stock.</p>
+        <button type="button" onClick={sendNow} disabled={sending} className="rounded-full border border-amber-400 px-4 py-2 text-xs font-semibold text-amber-300 disabled:opacity-50" data-testid="settings-summary-send-now">{sending ? "Sending…" : "Send today's summary now"}</button>
       </div>
       <button className="rounded-full bg-amber-500 px-6 py-2.5 text-sm font-bold text-[#0A0F1D]" data-testid="settings-save-button">Save</button>
     </form>

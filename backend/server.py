@@ -22,7 +22,10 @@ import bcrypt
 import jwt
 import razorpay
 import requests
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, UploadFile, File
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, UploadFile, File, BackgroundTasks
+import hmac
+from html import escape
+from emailer import send_email
 from fastapi.responses import StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -129,7 +132,8 @@ async def me(user: dict = Depends(require_admin)):
 # ---------------- Settings & pricing ----------------
 DEFAULT_SETTINGS = {"india_per_kg": 250, "abroad_extra_per_kg": 450, "rounding": "round_up", "diwali_deadline": "2026-11-05",
                     "whatsapp_enabled": False, "whatsapp_number": "",
-                    "whatsapp_message": "Namaskar AAICHELADOO! I would like to place an order."}
+                    "whatsapp_message": "Namaskar AAICHELADOO! I would like to place an order.",
+                    "summary_enabled": True, "summary_email": os.environ["ADMIN_EMAIL"].lower()}
 IST = timezone(timedelta(hours=5, minutes=30))
 
 
@@ -768,6 +772,105 @@ class SettingsIn(BaseModel):
     whatsapp_enabled: bool = False
     whatsapp_number: str = Field(default="", pattern=r"^(\d{10,15})?$")
     whatsapp_message: str = Field(default="", max_length=300)
+    summary_enabled: bool = True
+    summary_email: str = Field(default="", pattern=r"^([^@\s]+@[^@\s]+\.[^@\s]+)?$", max_length=120)
+
+
+# ---------------- Daily summary email ----------------
+TD = '<td style="padding:6px 8px;border-bottom:1px solid #eee">'
+
+
+def _rows(items: list) -> str:
+    return "".join("<tr>" + "".join(f"{TD}{escape(str(c))}</td>" for c in r) + "</tr>" for r in items)
+
+
+def _table(title: str, head: list, rows: list, empty: str) -> str:
+    if not rows:
+        return f'<h3 style="margin:20px 0 6px;color:#1E3A8A">{escape(title)}</h3><p style="color:#666">{escape(empty)}</p>'
+    th = "".join(f'<th align="left" style="padding:6px 8px;background:#FEF3C7">{escape(h)}</th>' for h in head)
+    return (f'<h3 style="margin:20px 0 6px;color:#1E3A8A">{escape(title)}</h3>'
+            f'<table role="presentation" width="100%" cellspacing="0" style="border-collapse:collapse;font-size:13px"><tr>{th}</tr>{_rows(rows)}</table>')
+
+
+def _items(lines: list) -> str:
+    return ", ".join(f"{line['name']}{'' if line['kind'] == 'combo' else ' ' + str(line['grams']) + 'g'} x{line['qty']}" for line in lines)
+
+
+async def build_summary() -> tuple[str, str]:
+    today = datetime.now(IST).date()
+    start = datetime(today.year, today.month, today.day, tzinfo=IST).astimezone(timezone.utc).isoformat()
+    web = await db.orders.find({"created_at": {"$gte": start}, "status": {"$in": ["paid", "delivered"]}}, {"_id": 0}).to_list(1000)
+    wa = await db.wa_orders.find({"created_at": {"$gte": start}}, {"_id": 0}).to_list(1000)
+    products = await db.products.find({"active": True}, {"_id": 0}).sort("stock_grams", 1).to_list(1000)
+    low = [p for p in products if p["stock_grams"] < 1000]
+    web_total = sum(o["total"] for o in web)
+    wa_total = sum(o["total"] for o in wa if o["status"] != "cancelled")
+    day = today.strftime("%d %b %Y")
+    html = (
+        '<table role="presentation" width="100%"><tr><td style="padding:24px;font-family:Arial,sans-serif;color:#0A0F1D">'
+        f'<h2 style="margin:0;color:#1E3A8A">Daily order summary – {escape(day)}</h2>'
+        f'<p style="margin:8px 0 0">Website orders (paid): <strong>{len(web)}</strong> · Rs {web_total:,}<br>'
+        f'WhatsApp orders: <strong>{len(wa)}</strong> · Rs {wa_total:,} (excluding cancelled)<br>'
+        f'Items running low: <strong>{len(low)}</strong></p>'
+        + _table("Website orders", ["Order", "Type", "Customer", "Items", "Total"],
+                 [[o["id"], o.get("order_type", "regular").title(), f"{o['customer']['name']} ({o['customer']['phone']})", _items(o["lines"]), f"Rs {o['total']:,}"] for o in web],
+                 "No paid website orders today.")
+        + _table("WhatsApp orders", ["Ref", "Status", "Customer", "Items", "Total"],
+                 [[o["id"], o["status"].title(), o.get("customer_name") or "-", _items(o["lines"]), f"Rs {o['total']:,}"] for o in wa],
+                 "No WhatsApp orders today.")
+        + _table("Low stock (under 1 kg)", ["Item", "Stock left", "Status"],
+                 [[p["name"], f"{p['stock_grams'] / 1000:.2f} kg", "Out of stock" if p["stock_grams"] < 250 else "Low"] for p in low],
+                 "All items have at least 1 kg in stock.")
+        + f'<p style="margin-top:24px;font-size:12px;color:#888">Sent automatically by {escape(os.environ["EMAIL_FROM_NAME"])} every evening.</p>'
+        '</td></tr></table>')
+    return f"{os.environ['EMAIL_FROM_NAME']} daily summary – {day}", html
+
+
+async def send_daily_summary() -> str | None:
+    s = await get_settings()
+    if not s.get("summary_enabled") or not s.get("summary_email"):
+        return None
+    subject, html = await build_summary()
+    return await send_email(to=s["summary_email"], subject=subject, html=html)
+
+
+async def _run_summary_job(run_id: str):
+    try:
+        await send_daily_summary()
+        await db.cron_runs.update_one({"run_id": run_id}, {"$set": {"status": "done"}})
+    except Exception as e:
+        logger.exception("daily summary failed")
+        await db.cron_runs.update_one({"run_id": run_id}, {"$set": {"status": "failed", "error": str(e)}})
+
+
+@api.post("/cron/daily-summary")
+async def cron_daily_summary(request: Request, background: BackgroundTasks):
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    auth = request.headers.get("Authorization", "")
+    secret = os.environ.get("WEBHOOK_CRON_SECRET", "")
+    if not secret or not auth.startswith("Bearer ") or not hmac.compare_digest(auth[7:], secret):
+        raise HTTPException(401, "Unauthorized")
+    try:
+        env = await request.json()
+    except Exception:
+        env = None
+    if env is not None and not isinstance(env, dict):
+        raise HTTPException(400, "Invalid body")
+    run_id = request.headers.get("X-Webhook-Id") or (env or {}).get("run_id") or new_id()
+    res = await db.cron_runs.update_one({"run_id": run_id}, {"$setOnInsert": {"run_id": run_id, "job": "daily-summary", "status": "queued", "created_at": now_iso()}}, upsert=True)
+    if res.upserted_id is not None:
+        background.add_task(_run_summary_job, run_id)
+    return {"accepted": True}
+
+
+@admin.post("/daily-summary/send")
+async def send_summary_now():
+    s = await get_settings()
+    if not s.get("summary_email"):
+        raise HTTPException(400, "Add an email address for the daily summary first")
+    subject, html = await build_summary()
+    await send_email(to=s["summary_email"], subject=subject, html=html)
+    return {"ok": True, "to": s["summary_email"]}
 
 
 @admin.get("/settings")
@@ -777,6 +880,8 @@ async def read_settings():
 
 @admin.put("/settings")
 async def save_settings(body: SettingsIn):
+    if body.summary_enabled and not body.summary_email:
+        raise HTTPException(400, "Add an email address for the daily summary")
     if body.whatsapp_enabled and not body.whatsapp_number:
         raise HTTPException(400, "Add a WhatsApp number before turning WhatsApp orders on")
     await db.settings.update_one({"key": "delivery"}, {"$set": body.model_dump()}, upsert=True)
@@ -814,6 +919,7 @@ async def startup():
     await db.orders.create_index("id", unique=True)
     await db.leads.create_index("created_at")
     await db.files.create_index("storage_path")
+    await db.cron_runs.create_index("run_id", unique=True)
     try:
         await asyncio.to_thread(init_storage)
     except Exception:

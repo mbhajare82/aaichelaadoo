@@ -1,0 +1,9 @@
+crons:
+  - name: daily-order-summary
+    description: "Emails the owner the day's website and WhatsApp orders and low stock at 8pm IST"
+    cron: "0 20 * * *"
+    timezone: "Asia/Kolkata"
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    endpoint: "{{BASE_URL}}/api/cron/daily-summary"
+    method: POST
+    enabled: true
