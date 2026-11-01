@@ -14,7 +14,7 @@ export const Header = () => {
     <header className="sticky top-0 z-40 border-b border-amber-500/15 bg-[#0A0F1D]/80 backdrop-blur-xl" data-testid="site-header">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <a href="#top" className="flex items-center gap-2" data-testid="brand-logo-link">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-amber-500 font-cinzel text-lg font-bold text-[#0A0F1D]">A</span>
+          <img src="/logo192.png" alt="AAICHELADOO logo" className="h-10 w-10 rounded-full" data-testid="brand-logo" />
           <span className="font-cinzel text-lg font-bold tracking-wide text-amber-400 sm:text-xl">AAICHELADOO</span>
         </a>
         <nav className="hidden items-center gap-7 text-sm text-slate-300 md:flex">

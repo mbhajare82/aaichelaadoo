@@ -23,6 +23,7 @@ User choices: Claude Sonnet 5.5 (Emergent key); Razorpay test mode first; delive
 - Diwali countdown banner at top of landing (Lakshmi Puja dates 2026-11-08, 2027-10-29, 2028-10-17 IST; shows greeting on the day, hides after last date).
 - Diwali vs Regular orders: checkout picker (order_type), admin-editable Diwali order deadline (default 2026-11-05, inclusive, IST) in Delivery tab; after deadline only Regular allowed (server-enforced); banner shows last date / closed note; admin Orders tab tags + All/Diwali/Regular filter.
 - Brand renamed to AAICHELADOO (header, footer, admin, Laado chat, Razorpay checkout name, browser tab title). Laado's fallback line "'Aaiche Laado' will call back for serving you..." kept as originally specified.
+- Placeholder logo (golden laddu with diya, AI-generated) at frontend/public/logo.png, logo192.png, favicon.png; used in header, footer, admin login/dashboard and browser tab. Replace those 3 files to change it.
 
 ## Pending / Backlog
 - P0: Real Razorpay test keys (saved values are invalid placeholders) then test payment success flow.

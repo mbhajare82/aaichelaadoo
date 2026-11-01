@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { http, errMsg } from "@/lib/api";
 
@@ -29,7 +29,7 @@ export default function AdminLogin() {
   return (
     <div className="grid-paper grid min-h-screen place-items-center px-4" data-testid="admin-login-page">
       <form onSubmit={submit} className="w-full max-w-sm space-y-4 rounded-3xl border border-amber-500/25 bg-slate-900/80 p-8 backdrop-blur-xl">
-        <div className="flex items-center gap-2 text-amber-400"><Lock className="h-5 w-5" /><span className="font-cinzel text-xl font-bold">AAICHELADOO Admin</span></div>
+        <div className="flex items-center gap-2 text-amber-400"><img src="/logo192.png" alt="" className="h-8 w-8 rounded-full" /><span className="font-cinzel text-xl font-bold">AAICHELADOO Admin</span></div>
         <Input type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="border-slate-600 bg-slate-950 text-slate-100" data-testid="admin-email-input" />
         <Input type="password" required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="border-slate-600 bg-slate-950 text-slate-100" data-testid="admin-password-input" />
         {error && <p className="text-sm text-red-400" data-testid="admin-login-error">{error}</p>}
