@@ -17,7 +17,7 @@ const tabs = [
   ["combos", "Combos", CombosPanel],
   ["orders", "Orders", OrdersPanel],
   ["testimonials", "Testimonials", TestimonialsPanel],
-  ["settings", "Delivery", SettingsPanel],
+  ["settings", "Settings", SettingsPanel],
 ];
 
 export default function AdminDashboard() {

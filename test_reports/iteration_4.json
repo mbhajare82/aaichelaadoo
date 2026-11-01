@@ -1,0 +1,28 @@
+{
+  "summary": "Iteration 4: WhatsApp click-to-chat ordering tested end to end. Backend: 11/11 pytest pass (enable-without-number 400, number regex 422 for letters/+/short/long, message >300 422, enable+save keeps delivery rates/rounding/deadline, public /api/catalog exposes whatsapp fields, country-code number accepted, restore). Frontend: admin Settings form (error toast when enabling without a number, digits-only number input, save persists after reload), float button href https://wa.me/919876543210?text=<encoded opening msg> at bottom-left with no overlap with Ask Laado, cart WhatsApp href includes item names, weights, qty, Items, Delivery (India/Abroad, weight), Total matching cart-total, Name:/Delivery address:, and the href changes when destination is toggled (India total 750 -> Abroad total 1,200). Disabling hides both buttons. At 390px the float button is icon-only (52px wide), doesn't overlap Laado, and the cart WhatsApp button fits in the viewport. Settings restored to the requested defaults and checked via /api/catalog.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "AdminDashboard tabs", "issue": "Tab testid is admin-tab-settings, but the visible label still says 'Delivery' (AdminDashboard.jsx line 20). Review request says it was renamed to Settings.", "selector": "[data-testid='admin-tab-settings']", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Public page mobile", "issues": ["Icon-only WhatsApp float button has no aria-label/title (accessibility). Add aria-label='Order on WhatsApp'."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_whatsapp_settings.py", "/app/test_reports/pytest/pytest_whatsapp.xml"],
+  "action_items": [
+    "Rename the admin tab label from 'Delivery' to 'Settings' in AdminDashboard.jsx: [\"settings\", \"Settings\", SettingsPanel]",
+    "Add aria-label='Order on WhatsApp' to whatsapp-float-button"
+  ],
+  "critical_code_review_comments": [
+    "Optional: the cart WhatsApp message leaves out the order type (Diwali/Regular) that checkout collects. The owner may want it in the message.",
+    "Optional: if the quote request fails (quote=null), the WhatsApp message is sent without totals. That is acceptable but silent."
+  ],
+  "updated_files": ["/app/backend/tests/test_whatsapp_settings.py"],
+  "success_rate": {"backend": "100%", "frontend": "100% functional (1 low-priority label mismatch)"},
+  "seed_data_creation": "None. Settings restored to india 250, abroad 450, round_up, 2026-11-05, whatsapp disabled, empty number, default message.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "WhatsApp ordering is verified. test_whatsapp_settings.py restores settings in the fixture teardown. Public settings come from /api/catalog.settings. Razorpay returns 503 by design."
+}

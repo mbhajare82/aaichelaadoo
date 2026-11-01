@@ -27,7 +27,7 @@ export const WhatsAppFloat = ({ settings }) => {
   if (!waEnabled(settings)) return null;
   return (
     <a
-      href={waLink(settings, settings.whatsapp_message)} target="_blank" rel="noopener noreferrer"
+      href={waLink(settings, settings.whatsapp_message)} target="_blank" rel="noopener noreferrer" aria-label="Order on WhatsApp"
       className="fixed bottom-5 left-5 z-50 flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-3.5 font-semibold text-[#0A0F1D] shadow-[0_10px_30px_rgba(37,211,102,0.35)] transition-transform duration-200 hover:scale-105"
       data-testid="whatsapp-float-button"
     >
