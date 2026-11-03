@@ -602,6 +602,15 @@ async def lead_detail(lead_id: str):
     return lead
 
 
+class Nutrition(BaseModel):
+    energy_kcal: Optional[float] = Field(default=None, ge=0)
+    protein_g: Optional[float] = Field(default=None, ge=0)
+    carbs_g: Optional[float] = Field(default=None, ge=0)
+    fat_g: Optional[float] = Field(default=None, ge=0)
+    fibre_g: Optional[float] = Field(default=None, ge=0)
+    sugar_g: Optional[float] = Field(default=None, ge=0)
+
+
 class ProductIn(BaseModel):
     name: str = Field(min_length=2, max_length=80)
     category: Literal["sweets", "namkin", "healthy"]
@@ -610,6 +619,8 @@ class ProductIn(BaseModel):
     price_per_kg: float = Field(gt=0)
     stock_grams: int = Field(ge=0)
     active: bool = True
+    ingredients: List[str] = Field(default_factory=list, max_length=40)
+    nutrition: Optional[Nutrition] = None
 
 
 @admin.get("/products")
@@ -903,6 +914,26 @@ SEED_PRODUCTS = [
     ("Roasted Makhana Chivda", "healthy", "Light roasted lotus seeds and nuts.", "/images/makhana_chivda.jpg", 1000),
 ]
 
+SEED_DETAILS = {
+    "Besan Laddu": ["Gram flour (besan)", "Pure ghee", "Sugar", "Cardamom", "Cashews"],
+    "Rava Laddu": ["Semolina (rava)", "Desiccated coconut", "Ghee", "Sugar", "Milk", "Cardamom", "Raisins", "Cashews"],
+    "Karanji": ["Refined wheat flour", "Semolina", "Desiccated coconut", "Jaggery", "Poppy seeds", "Cardamom", "Oil for frying"],
+    "Anarse": ["Rice", "Jaggery", "Poppy seeds", "Ghee"],
+    "Bhajani Chakli": ["Bhajani flour (rice, chana dal, urad dal, coriander, cumin)", "Red chilli powder", "Sesame seeds", "Ajwain", "Salt", "Oil for frying"],
+    "Poha Chivda": ["Thin poha", "Peanuts", "Roasted chana dal", "Curry leaves", "Green chilli", "Turmeric", "Sugar", "Salt", "Oil"],
+    "Shankarpali": ["Wheat flour", "Ghee", "Sugar", "Milk", "Salt", "Oil for frying"],
+    "Kadboli": ["Bhajani flour", "Rice flour", "Red chilli powder", "Sesame seeds", "Ajwain", "Salt", "Oil for frying"],
+    "Dink Laddu": ["Edible gum (dink)", "Dates", "Dry coconut", "Almonds", "Cashews", "Ghee", "Nutmeg"],
+    "Nachni Laddu": ["Ragi (nachni) flour", "Jaggery", "Ghee", "Cardamom", "Almonds"],
+    "Roasted Makhana Chivda": ["Lotus seeds (makhana)", "Peanuts", "Almonds", "Curry leaves", "Turmeric", "Black pepper", "Rock salt", "Ghee"],
+}
+
+SEED_NUTRITION = {
+    "Dink Laddu": {"energy_kcal": 480, "protein_g": 9, "carbs_g": 50, "fat_g": 27, "fibre_g": 5, "sugar_g": 35},
+    "Nachni Laddu": {"energy_kcal": 430, "protein_g": 7, "carbs_g": 60, "fat_g": 18, "fibre_g": 6, "sugar_g": 28},
+    "Roasted Makhana Chivda": {"energy_kcal": 450, "protein_g": 12, "carbs_g": 50, "fat_g": 22, "fibre_g": 7, "sugar_g": 3},
+}
+
 SEED_COMBOS = [
     ("Mini Faral Box", 599, [("Besan Laddu", 250), ("Poha Chivda", 250)]),
     ("Family Faral Box", 999, [("Besan Laddu", 250), ("Karanji", 250), ("Poha Chivda", 250), ("Bhajani Chakli", 250)]),
@@ -929,6 +960,9 @@ async def startup():
         await db.users.insert_one({"id": new_id(), "email": email, "name": "Admin", "role": "admin",
                                    "password_hash": hash_password(os.environ["ADMIN_PASSWORD"]),
                                    "created_at": now_iso()})
+    for name, ing in SEED_DETAILS.items():
+        await db.products.update_one({"name": name, "ingredients": {"$exists": False}},
+                                     {"$set": {"ingredients": ing, "nutrition": SEED_NUTRITION.get(name)}})
     if await db.products.count_documents({}) == 0:
         ids = {}
         for name, cat, desc, img, price in SEED_PRODUCTS:
@@ -936,6 +970,7 @@ async def startup():
             ids[name] = pid
             await db.products.insert_one({"id": pid, "name": name, "category": cat, "description": desc,
                                           "image": img, "price_per_kg": price, "stock_grams": 10000,
+                                          "ingredients": SEED_DETAILS.get(name, []), "nutrition": SEED_NUTRITION.get(name),
                                           "active": True, "created_at": now_iso()})
         for name, price, items in SEED_COMBOS:
             await db.combos.insert_one({"id": new_id(), "name": name, "price": price, "description": "",

@@ -29,6 +29,12 @@ export default function Landing() {
     load();
   }, [load]);
 
+  useEffect(() => {
+    if (!loading && window.location.hash) {
+      document.querySelector(window.location.hash)?.scrollIntoView();
+    }
+  }, [loading]);
+
   return (
     <div className="grid-paper grain relative min-h-screen text-slate-100" data-testid="landing-page">
       <CountdownBanner settings={catalog.settings} />

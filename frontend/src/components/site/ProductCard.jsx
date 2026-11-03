@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Plus, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/context/CartContext";
 import { rupee, fmtWeight } from "@/lib/api";
 
-export const ProductCard = ({ product }) => {
+export const PackBuy = ({ product }) => {
   const { add } = useCart();
   const firstAvail = product.packs.find((p) => p.in_stock) || product.packs[0];
   const [grams, setGrams] = useState(firstAvail.grams);
@@ -14,17 +15,7 @@ export const ProductCard = ({ product }) => {
     toast.success(`${product.name} (${fmtWeight(grams)}) added`);
   };
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-[#1E293B] transition-transform duration-200 hover:-translate-y-1 hover:border-amber-500/50" data-testid={`product-card-${product.id}`}>
-      <div className="relative aspect-[4/3] overflow-hidden bg-slate-800">
-        {product.image && <img src={product.image} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />}
-        <span className={`absolute left-3 top-3 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${product.in_stock ? "border-emerald-500/40 bg-emerald-950/80 text-emerald-400" : "border-red-500/40 bg-red-950/80 text-red-400"}`} data-testid={`product-stock-${product.id}`}>
-          {product.in_stock ? "In stock" : "Out of stock"}
-        </span>
-      </div>
-      <div className="flex flex-1 flex-col p-5">
-        <h3 className="text-lg font-semibold">{product.name}</h3>
-        <p className="mt-1 flex-1 text-sm text-slate-400">{product.description}</p>
-        <p className="mt-2 text-xs text-slate-500">{rupee(product.price_per_kg)} / kg</p>
+    <>
         <div className="mt-4 grid grid-cols-3 gap-2">
           {product.packs.map((p) => (
             <button
@@ -46,7 +37,32 @@ export const ProductCard = ({ product }) => {
             <Plus className="h-4 w-4" /> {pack.in_stock ? "Add" : "Out of stock"}
           </button>
         </div>
-      </div>
-    </div>
+    </>
   );
 };
+
+export const StockBadge = ({ product }) => (
+  <span className={`absolute left-3 top-3 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${product.in_stock ? "border-emerald-500/40 bg-emerald-950/80 text-emerald-400" : "border-red-500/40 bg-red-950/80 text-red-400"}`} data-testid={`product-stock-${product.id}`}>
+    {product.in_stock ? "In stock" : "Out of stock"}
+  </span>
+);
+
+export const ProductCard = ({ product }) => (
+  <div className="group flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-[#1E293B] transition-transform duration-200 hover:-translate-y-1 hover:border-amber-500/50" data-testid={`product-card-${product.id}`}>
+    <Link to={`/item/${product.id}`} className="relative block aspect-[4/3] overflow-hidden bg-slate-800" data-testid={`product-image-link-${product.id}`}>
+      {product.image && <img src={product.image} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />}
+      <StockBadge product={product} />
+    </Link>
+    <div className="flex flex-1 flex-col p-5">
+      <h3 className="text-lg font-semibold">{product.name}</h3>
+      <p className="mt-1 flex-1 text-sm text-slate-400">{product.description}</p>
+      <div className="mt-2 flex items-center justify-between">
+        <p className="text-xs text-slate-500">{rupee(product.price_per_kg)} / kg</p>
+        <Link to={`/item/${product.id}`} className="flex items-center gap-1 text-xs font-semibold text-amber-400 hover:underline" data-testid={`product-details-link-${product.id}`}>
+          {product.category === "healthy" ? "Contents & nutrition" : "View contents"} <ArrowUpRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+      <PackBuy product={product} />
+    </div>
+  </div>
+);
