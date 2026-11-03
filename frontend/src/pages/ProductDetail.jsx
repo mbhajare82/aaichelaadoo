@@ -36,8 +36,10 @@ const NutritionTable = ({ n }) => {
 
 const Details = ({ p }) => (
   <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
-    <div className="relative overflow-hidden rounded-3xl bg-slate-800">
-      {p.image && <img src={p.image} alt={p.name} className="aspect-[4/3] w-full object-cover" />}
+    <div className="relative self-start overflow-hidden rounded-3xl bg-slate-800">
+      {p.image ? <img src={p.image} alt={p.name} className="aspect-[4/3] w-full object-cover" /> : (
+        <div className="grid aspect-[4/3] w-full place-items-center"><img src="/logo192.png" alt="" className="h-24 w-24 opacity-60" /></div>
+      )}
       <StockBadge product={p} />
     </div>
     <div>

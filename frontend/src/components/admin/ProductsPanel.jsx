@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { http, rupee, errMsg } from "@/lib/api";
+import { http, errMsg } from "@/lib/api";
 import { NUTRIENTS } from "@/pages/ProductDetail";
 
 const blank = { name: "", category: "sweets", description: "", image: "", price_per_kg: 600, stock_grams: 5000, active: true, ingredients: [], nutrition: null };
@@ -98,8 +98,8 @@ const ProductForm = ({ initial, onSaved, onClose }) => {
     e.preventDefault();
     const body = { name: f.name, category: f.category, description: f.description, image: f.image, active: f.active,
       price_per_kg: Number(f.price_per_kg), stock_grams: Math.round(Number(f.stock_kg) * 1000),
-      ingredients: f.ingredients_text.split(/\n|,/).map((s) => s.trim()).filter(Boolean),
-      nutrition: cleanNutrition(f.nutrition) };
+      ingredients: f.ingredients_text.split("\n").map((s) => s.trim()).filter(Boolean),
+      nutrition: f.category === "healthy" ? cleanNutrition(f.nutrition) : null };
     try {
       if (initial.id) await http.put(`/admin/products/${initial.id}`, body);
       else await http.post("/admin/products", body);
@@ -124,7 +124,7 @@ const ProductForm = ({ initial, onSaved, onClose }) => {
         <div><Label className="text-xs">Price per kg (₹)</Label><Input required type="number" min="1" step="1" value={f.price_per_kg} onChange={set("price_per_kg")} className={inputCls} data-testid="product-form-price" /></div>
         <div><Label className="text-xs">Stock available (kg)</Label><Input required type="number" min="0" step="0.05" value={f.stock_kg} onChange={set("stock_kg")} className={inputCls} data-testid="product-form-stock" /></div>
       </div>
-      <div><Label className="text-xs">Contents / ingredients (one per line)</Label><Textarea rows={4} value={f.ingredients_text} onChange={set("ingredients_text")} placeholder={"Gram flour\nGhee\nSugar"} className={inputCls} data-testid="product-form-ingredients" /></div>
+      <div><Label className="text-xs">Contents / ingredients (one per line)</Label><Textarea rows={4} value={f.ingredients_text} onChange={set("ingredients_text")} placeholder={"e.g. Gram flour\nGhee\nSugar"} className={`placeholder:text-slate-500 ${inputCls}`} data-testid="product-form-ingredients" /></div>
       {f.category === "healthy" && <NutritionFields value={f.nutrition} onChange={(nutrition) => setF((cur) => ({ ...cur, nutrition }))} />}
       <label className="flex items-center gap-2 text-sm"><Switch checked={f.active} onCheckedChange={(v) => setF({ ...f, active: v })} data-testid="product-form-active" /> Show on website</label>
       <button className="w-full rounded-full bg-amber-500 py-2.5 text-sm font-bold text-[#0A0F1D]" data-testid="product-form-save">Save item</button>

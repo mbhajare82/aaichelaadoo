@@ -1,0 +1,37 @@
+{
+  "summary": "Tested item details pages and admin item management. Backend: 11/11 pytest pass (all seeded items have ingredients, healthy items have nutrition (Dink 480 kcal), sweets/namkin have none, no _id, 401 unauth, 422 on price 0 / negative nutrition, create healthy item -> catalog shows ingredients+nutrition+packs, PUT keeps details, PUT 404, DELETE removes + repeat 404, deleting combo item Besan -> 400 'part of a combo'). Frontend: card links 'View contents' / 'Contents & nutrition' and image link go to /item/{id}; detail page shows name, photo, stock badge, price/kg, pack picker (Dink 500g = Rs600), Add to cart increments cart and cart sheet opens with item; contents chips; nutrition table 'Approximate, per 100 g' only for healthy items; Chakli has no nutrition table; unknown id -> product-not-found; Back to menu -> /#menu scrolled to menu; header nav from detail works; cart persists across detail pages. Admin: add TEST_Oats Laddu (healthy, nutrition fields appear only for Healthy) -> on public Healthy tab and its detail shows contents+nutrition; pencil edit prefilled ingredients/nutrition and saved changes; inline price Enter and blur both save with toast, public packs update (Rava 640 -> 160/320/640) and restored to 600; empty price -> error toast and value reset; delete Besan -> error toast, row stays; delete TEST item with confirm -> removed from admin and public. Mobile 390px: detail page has no horizontal overflow, admin dialog scrolls to Save. One real bug: the ingredients textarea also splits on commas.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PUT /api/admin/products/{id}", "issue": "Nutrition is saved for any category. If an item is switched from Healthy to Sweets/Namkin, the old nutrition object is still sent and stored, so the nutrition table keeps showing on a sweets detail page. Set nutrition to None server-side when category != 'healthy' (or clear it in the form)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ProductsPanel ProductForm save()", "issue": "Ingredients are split with /\\n|,/ even though the label says 'one per line'. Opening Bhajani Chakli with the pencil and pressing Save with no changes turned 'Bhajani flour (rice, chana dal, urad dal, coriander, cumin)' into 5 broken chips ('Bhajani flour (rice', 'chana dal', ..., 'cumin)'). Reproduced, then restored through the API. Fix: split only on '\\n'.", "selector": "[data-testid=product-form-ingredients]", "priority": "HIGH"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Product detail (desktop)", "issues": ["Image wrapper (rounded-3xl bg-slate-800) stretches to the full height of the right column, leaving a large empty slate block under the photo (Dink Laddu). Add md:items-start or self-start to the image wrapper.", "Item with no image (e.g. a new admin item without a photo) shows a big empty box with only the stock badge. Add a placeholder icon or the logo."]},
+      {"screen": "Admin add item dialog (mobile)", "issues": ["Ingredients placeholder 'Gram flour / Ghee / Sugar' looks like real text. Use a lighter placeholder colour (placeholder:text-slate-500)."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_product_details_admin.py", "/app/test_reports/pytest/product_details.xml"],
+  "action_items": [
+    "ProductForm: split ingredients on newline only (not comma). Editing any item whose ingredient contains a comma breaks it.",
+    "Clear nutrition when category != healthy (frontend cleanNutrition and/or backend)",
+    "ProductDetail: stop the image wrapper stretching (self-start) and add a no-image placeholder"
+  ],
+  "critical_code_review_comments": [
+    "ProductsPanel.jsx line 101: split(/\\n|,/) contradicts the 'one per line' label and corrupts seeded data on re-save",
+    "PriceCell sends the full stale product object ({...p}) on PUT. A concurrent edit of other fields in another tab or session would be overwritten. A PATCH price-only endpoint would be safer.",
+    "ProductDetail.jsx: ingredient <li key={i}> uses the text as the key, so duplicate ingredients give duplicate React keys. Use the index.",
+    "ProductDetail fetches the whole /catalog to show one item. Fine at this size; a GET /api/products/{id} would scale better."
+  ],
+  "updated_files": ["/app/backend/tests/test_product_details_admin.py"],
+  "success_rate": {"backend": "100% (11/11)", "frontend": "~95% (1 bug: comma split in ingredients)"},
+  "seed_data_creation": "Created TEST_Oats Laddu API (pytest) and TEST_Oats Laddu (UI); both deleted. Rava price changed 600->640->600. Chakli ingredients corrupted by the comma-split bug and restored via API. Final state verified: 11 products at original prices (Besan 700, Rava 600, Karanji 750, Anarse 800, Chakli 560, Poha 480, Shankarpali 500, Kadboli 580, Dink 1200, Nachni 900, Makhana 1000), all stock 10000.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run pytest with '-n 0'. Healthy items are only visible after clicking [data-testid=category-tab-healthy] on the landing page. Admin tab 'Items & stock' is found with get_by_role('tab'). Accept window.confirm for delete via page.on('dialog'). page.request needs an absolute URL. After testing ProductForm edits, check that Chakli ingredients still hold the single comma-containing entry."
+}

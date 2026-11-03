@@ -622,6 +622,12 @@ class ProductIn(BaseModel):
     ingredients: List[str] = Field(default_factory=list, max_length=40)
     nutrition: Optional[Nutrition] = None
 
+    def clean(self) -> dict:
+        d = self.model_dump()
+        if self.category != "healthy":
+            d["nutrition"] = None
+        return d
+
 
 @admin.get("/products")
 async def admin_products():
@@ -630,7 +636,7 @@ async def admin_products():
 
 @admin.post("/products")
 async def add_product(body: ProductIn):
-    doc = {"id": new_id(), **body.model_dump(), "created_at": now_iso()}
+    doc = {"id": new_id(), **body.clean(), "created_at": now_iso()}
     await db.products.insert_one(doc)
     doc.pop("_id", None)
     return doc
@@ -638,7 +644,7 @@ async def add_product(body: ProductIn):
 
 @admin.put("/products/{pid}")
 async def edit_product(pid: str, body: ProductIn):
-    res = await db.products.update_one({"id": pid}, {"$set": body.model_dump()})
+    res = await db.products.update_one({"id": pid}, {"$set": body.clean()})
     if not res.matched_count:
         raise HTTPException(404, "Product not found")
     return await db.products.find_one({"id": pid}, {"_id": 0})
